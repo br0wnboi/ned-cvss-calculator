@@ -108,6 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 clickTimeout = null;
                 // Single click logic (copy)
                 const text = vectorDisplay.textContent.trim();
+
+                if (text === 'Invalid metrics' || text.includes('Error') || text === '--') {
+                    showToast('Cannot copy invalid vector string');
+                    return;
+                }
+
                 navigator.clipboard.writeText(text).then(() => {
                     copiedBadge.classList.add('show');
                     setTimeout(() => {
@@ -201,15 +207,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Setup metric selection
     document.querySelectorAll('.opt-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const parent = e.target.parentElement;
+            const actualBtn = e.target.closest('.opt-btn');
+            if (!actualBtn) return;
+
+            const parent = actualBtn.parentElement;
             const metricGroup = parent.dataset.metric;
+            if (!metricGroup) return;
+
             const [versionStr, metricName] = metricGroup.split('_');
             const version = "cvss" + versionStr;
 
-            parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
-            e.target.classList.add('selected');
+            // Rescue corrupted state from bad manual vector string inputs before applying this valid choice
+            if (scoreDisplay.textContent === 'Error' || vectorDisplay.textContent.trim() === 'Invalid metrics') {
+                if (defaultStates[version]) {
+                    state[version] = JSON.parse(JSON.stringify(defaultStates[version]));
+                }
+            }
 
-            state[version].metrics[metricName] = e.target.dataset.val;
+            parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+            actualBtn.classList.add('selected');
+
+            state[version].metrics[metricName] = actualBtn.dataset.val;
             updateCalculations();
             saveState();
         });
@@ -217,6 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Setup Reset Button
     resetBtn.addEventListener('click', () => {
+        if (!defaultStates[currentTab]) return;
+
         state[currentTab] = JSON.parse(JSON.stringify(defaultStates[currentTab]));
         updateUISelections();
         updateCalculations();

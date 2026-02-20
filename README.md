@@ -27,7 +27,7 @@ Ned is a locally-run, browser extension for calculating Common Vulnerability Sco
 ## Credits & Acknowledgements
 
 - Built by **br0wnboi**
-- [CVSS v3.1 Calculator Module](https://github.com/FIRSTdotorg/cvss-v3.1) - Copyright (c) 2019, FIRST.ORG, INC. (BSD-2-Clause)
+- [CVSS v3.1 Calculator Module](https://www.first.org/cvss/calculator/cvsscalc31.js) - Copyright (c) 2019, FIRST.ORG, INC. (BSD-2-Clause)
 - [CVSS v4.0 Calculator Module](https://github.com/RedHatProductSecurity/cvss-v4-calculator) - Copyright FIRST, Red Hat, and contributors. (SPDX: BSD-2-Clause)
 
 ## License

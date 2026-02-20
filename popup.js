@@ -337,6 +337,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Apply to each option button
             optionsContainer.querySelectorAll('.opt-btn').forEach(btn => {
                 const optVal = btn.dataset.val;
+
+                // Extract original title (e.g. "Network") as the short display name
+                // Some buttons might have already been processed if this function runs multiple times,
+                // but since innerHTML is overwritten, we rely on the data-val for the Initial.
+                // To be safe and idempotent, we check if it already has child elements
+                if (btn.children.length === 0) {
+                    const shortName = btn.title || optVal;
+                    btn.innerHTML = `<span class="opt-val">${optVal}</span>
+                                     <span class="opt-name">${shortName}</span>`;
+                }
+
+                // Add the official FIRST.org long help text to the browser native tooltip
                 const labelKey = metricName + "_" + optVal + "_Label";
                 if (helpObj[labelKey]) {
                     btn.title = helpObj[labelKey];

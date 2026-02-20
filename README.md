@@ -12,10 +12,17 @@ Ned is a locally-run, browser extension for calculating Common Vulnerability Sco
 
 ## Installation
 
+### Chromium (Chrome, Brave, Edge, etc.)
 1. Clone or download this repository.
 2. Open your chromium-based browser and navigate to `chrome://extensions/` (or `edge://extensions/` for Microsoft Edge).
 3. Enable **Developer mode** in the top right corner.
 4. Click **Load unpacked** and select the folder containing this extension's code.
+
+### Firefox
+1. Clone or download this repository.
+2. Open Firefox and navigate to `about:debugging`.
+3. Click on **This Firefox** in the sidebar.
+4. Click **Load Temporary Add-on...** and select the `manifest.json` file from the downloaded folder.
 
 ## Credits & Acknowledgements
 

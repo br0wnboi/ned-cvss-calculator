@@ -18,5 +18,10 @@
     },
     "permissions": [
         "storage"
-    ]
+    ],
+    "browser_specific_settings": {
+        "gecko": {
+            "id": "cvss-calculator@br0wnboi.tech"
+        }
+    }
 }

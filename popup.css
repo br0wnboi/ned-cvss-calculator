@@ -24,7 +24,7 @@
 }
 
 body {
-    width: 350px;
+    width: 380px;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-main);
@@ -67,7 +67,7 @@ h1 {
 .score-display {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 12px;
 }
 
@@ -77,17 +77,17 @@ h1 {
 }
 
 .score-value {
-    font-size: 3.5rem;
+    font-size: 3.2rem;
     font-weight: 700;
     line-height: 1;
     text-shadow: 0 0 20px var(--accent-glow);
 }
 
 .score-severity {
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     text-transform: uppercase;
-    padding: 6px 14px;
+    padding: 6px 12px;
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.1);
     letter-spacing: 0.5px;
@@ -308,7 +308,7 @@ main::-webkit-scrollbar-thumb:hover {
     background: rgba(0, 0, 0, 0.4);
     border: 1px solid rgba(255, 255, 255, 0.05);
     color: var(--text-muted);
-    padding: 6px 2px;
+    padding: 6px 4px;
     border-radius: 6px;
     cursor: pointer;
     transition: var(--transition);

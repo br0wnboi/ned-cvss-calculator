@@ -157,28 +157,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (currentTab !== 'cvss3') {
                     document.querySelector('.tab-btn[data-tab="cvss3"]').click();
                 }
-                // Parse v3 string
                 const metricsStr = newVector.replace('CVSS:3.1/', '');
                 const mArr = metricsStr.split('/');
+                let hasInvalidValue = false;
+
                 mArr.forEach(m => {
                     const [key, val] = m.split(':');
                     if (state.cvss3.metrics[key] !== undefined) {
-                        state.cvss3.metrics[key] = val;
+                        const metricGroup = `3_${key}`;
+                        const isValid = document.querySelector(`.metric-options[data-metric="${metricGroup}"] .opt-btn[data-val="${val}"]`);
+                        if (isValid) {
+                            state.cvss3.metrics[key] = val;
+                        } else {
+                            hasInvalidValue = true;
+                        }
                     }
                 });
+
+                if (hasInvalidValue) {
+                    showToast("Error parsing vector string. Ensure proper format.");
+                    updateCalculations();
+                    return;
+                }
+
             } else if (newVector.startsWith('CVSS:4.0/')) {
                 if (currentTab !== 'cvss4') {
                     document.querySelector('.tab-btn[data-tab="cvss4"]').click();
                 }
-                // Parse v4 string using the RedHat Vector class structure indirectly by rebuilding state
                 const metricsStr = newVector.replace('CVSS:4.0/', '');
                 const mArr = metricsStr.split('/');
+                let hasInvalidValue = false;
+
                 mArr.forEach(m => {
                     const [key, val] = m.split(':');
                     if (state.cvss4.metrics[key] !== undefined) {
-                        state.cvss4.metrics[key] = val;
+                        const metricGroup = `4_${key}`;
+                        const isValid = document.querySelector(`.metric-options[data-metric="${metricGroup}"] .opt-btn[data-val="${val}"]`);
+                        if (isValid) {
+                            state.cvss4.metrics[key] = val;
+                        } else {
+                            hasInvalidValue = true;
+                        }
                     }
                 });
+
+                if (hasInvalidValue) {
+                    showToast("Error parsing vector string. Ensure proper format.");
+                    updateCalculations(); // Allows UI to display cleanly based on whatever valid chunks were parsed
+                    return;
+                }
+
             } else {
                 showToast("Invalid vector string prefix. Must start with CVSS:3.1/ or CVSS:4.0/");
                 return;

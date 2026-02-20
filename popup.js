@@ -310,6 +310,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function applyHelpTextToButtons() {
+        document.querySelectorAll('.metric').forEach(metricDiv => {
+            const optionsContainer = metricDiv.querySelector('.metric-options');
+            if (!optionsContainer) return;
+
+            const metricGroup = optionsContainer.dataset.metric;
+            if (!metricGroup) return;
+
+            const [versionStr, metricName] = metricGroup.split('_');
+            const helpObj = versionStr === "3" ? (typeof CVSS31_Help !== 'undefined' ? CVSS31_Help.helpText_en : null) :
+                versionStr === "4" ? (typeof CVSS40_Help !== 'undefined' ? CVSS40_Help.helpText_en : null) : null;
+
+            if (!helpObj) return;
+
+            // Apply to the metric heading/label itself
+            const label = metricDiv.querySelector('label');
+            const headingKey = metricName + "_Heading";
+            if (label && helpObj[headingKey]) {
+                label.title = helpObj[headingKey];
+                // Visual cue that it has a tooltip
+                label.style.textDecoration = 'underline dotted rgba(255,255,255,0.3)';
+                label.style.cursor = 'help';
+            }
+
+            // Apply to each option button
+            optionsContainer.querySelectorAll('.opt-btn').forEach(btn => {
+                const optVal = btn.dataset.val;
+                const labelKey = metricName + "_" + optVal + "_Label";
+                if (helpObj[labelKey]) {
+                    btn.title = helpObj[labelKey];
+                }
+            });
+        });
+    }
+
     // Initialize application state
     loadState(() => {
         // Activate correct tab based on saved state
@@ -321,6 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render UI
         updateUISelections();
         updateCalculations();
+        applyHelpTextToButtons();
 
         if (currentTab === 'about') {
             document.querySelector('.vector-display-container').style.display = 'none';

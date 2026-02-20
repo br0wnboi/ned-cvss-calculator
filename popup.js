@@ -129,9 +129,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const editIconHTML = `✎`;
 
     function startEdit() {
+        const text = vectorDisplay.textContent.trim();
+        if (text === 'Invalid metrics' || text.includes('Error') || text === '--') {
+            showToast("Cannot edit an invalid vector string");
+            return;
+        }
+
         vectorDisplay.style.display = 'none';
         vectorInput.style.display = 'block';
-        vectorInput.value = vectorDisplay.textContent.trim();
+        vectorInput.value = text;
         vectorInput.focus();
         editVectorBtn.innerHTML = saveIconHTML;
         editVectorBtn.title = "Save Vector String";

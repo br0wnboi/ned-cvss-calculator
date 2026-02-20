@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ned - CVSS Calculator</title>
+    <link rel="stylesheet" href="popup.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Ned <span class="subtitle">CVSS Calculator</span></h1>
+            <div class="score-display">
+                <span class="score-emoji" id="final-emoji">😴</span>
+                <span class="score-value" id="final-score">0.0</span>
+                <span class="score-severity" id="final-severity">None</span>
+                <button id="reset-btn" class="icon-btn" title="Reset score">↻</button>
+            </div>
+            <div class="vector-display-container">
+                <button id="edit-vector-btn" class="icon-btn" title="Edit Vector String">✎</button>
+                <div class="vector-display" id="vector-string" title="Click to copy, click Edit to modify">
+                    CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N
+                </div>
+                <input type="text" id="vector-input" class="vector-edit-input" style="display: none;" />
+                <span id="copied-badge" class="copied-badge">Copied!</span>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-tab="cvss3">CVSS 3.1</button>
+            <button class="tab-btn" data-tab="cvss4">CVSS 4.0</button>
+            <button class="tab-btn" data-tab="about">About</button>
+        </nav>
+
+        <main>
+            <!-- CVSS 3.1 Tab Content -->
+            <section id="cvss3" class="tab-content active">
+                <div class="metrics-group">
+                    <h2>Base Metrics</h2>
+
+                    <div class="metric">
+                        <label>Attack Vector (AV)</label>
+                        <div class="metric-options" data-metric="3_AV">
+                            <button class="opt-btn" data-val="N" title="Network">N</button>
+                            <button class="opt-btn" data-val="A" title="Adjacent">A</button>
+                            <button class="opt-btn" data-val="L" title="Local">L</button>
+                            <button class="opt-btn" data-val="P" title="Physical">P</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Attack Complexity (AC)</label>
+                        <div class="metric-options" data-metric="3_AC">
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Privileges Required (PR)</label>
+                        <div class="metric-options" data-metric="3_PR">
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>User Interaction (UI)</label>
+                        <div class="metric-options" data-metric="3_UI">
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                            <button class="opt-btn" data-val="R" title="Required">R</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Scope (S)</label>
+                        <div class="metric-options" data-metric="3_S">
+                            <button class="opt-btn" data-val="U" title="Unchanged">U</button>
+                            <button class="opt-btn" data-val="C" title="Changed">C</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Confidentiality (C)</label>
+                        <div class="metric-options" data-metric="3_C">
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Integrity (I)</label>
+                        <div class="metric-options" data-metric="3_I">
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Availability (A)</label>
+                        <div class="metric-options" data-metric="3_A">
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Temporal and Environmental omitted for brevity, adding only Base for now to keep UI clean, can add later if req -->
+            </section>
+
+            <!-- CVSS 4.0 Tab Content -->
+            <section id="cvss4" class="tab-content">
+                <div class="metrics-group">
+                    <h2>Base Metrics</h2>
+
+                    <div class="metric">
+                        <label>Attack Vector (AV)</label>
+                        <div class="metric-options" data-metric="4_AV">
+                            <button class="opt-btn" data-val="N" title="Network">N</button>
+                            <button class="opt-btn" data-val="A" title="Adjacent">A</button>
+                            <button class="opt-btn" data-val="L" title="Local">L</button>
+                            <button class="opt-btn" data-val="P" title="Physical">P</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Attack Complexity (AC)</label>
+                        <div class="metric-options" data-metric="4_AC">
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Attack Requirements (AT)</label>
+                        <div class="metric-options" data-metric="4_AT">
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                            <button class="opt-btn" data-val="P" title="Present">P</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Privileges Required (PR)</label>
+                        <div class="metric-options" data-metric="4_PR">
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>User Interaction (UI)</label>
+                        <div class="metric-options" data-metric="4_UI">
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                            <button class="opt-btn" data-val="P" title="Passive">P</button>
+                            <button class="opt-btn" data-val="A" title="Active">A</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Vuln. Confidentiality (VC)</label>
+                        <div class="metric-options" data-metric="4_VC">
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Vuln. Integrity (VI)</label>
+                        <div class="metric-options" data-metric="4_VI">
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Vuln. Availability (VA)</label>
+                        <div class="metric-options" data-metric="4_VA">
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Sub. Confidentiality (SC)</label>
+                        <div class="metric-options" data-metric="4_SC">
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Sub. Integrity (SI)</label>
+                        <div class="metric-options" data-metric="4_SI">
+                            <button class="opt-btn" data-val="S" title="Safety">S</button>
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                        </div>
+                    </div>
+
+                    <div class="metric">
+                        <label>Sub. Availability (SA)</label>
+                        <div class="metric-options" data-metric="4_SA">
+                            <button class="opt-btn" data-val="S" title="Safety">S</button>
+                            <button class="opt-btn" data-val="H" title="High">H</button>
+                            <button class="opt-btn" data-val="L" title="Low">L</button>
+                            <button class="opt-btn" data-val="N" title="None">N</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- About Tab Content -->
+            <section id="about" class="tab-content">
+                <div class="about-container">
+                    <h2>Ned</h2>
+                    <p class="tagline">"I'm the guy in the chair."</p>
+                    <div class="info-card">
+                        <p>Ned is your local CVSS v3.1 and v4.0 scoring companion.</p>
+                        <p><strong>Offline & Private:</strong> The official FIRST.org and Red Hat javascript calculation
+                            mechanics are completely embedded within the extension. No external API calls are made,
+                            guaranteeing your assessments remain on your device.</p>
+                        <div class="legal-disclaimer">
+                            <strong>Open Source Acknowledgements:</strong><br>
+                            • CVSS v3.1 Calculator: Copyright (c) 2019, FIRST.ORG, INC. (BSD-2-Clause)<br>
+                            • CVSS v4.0 Calculator: Copyright FIRST, Red Hat, and contributors. (SPDX: BSD-2-Clause)
+                        </div>
+                    </div>
+                    <div class="credits">
+                        <p>Made by <strong>br0wnboi</strong></p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="lib/cvsscalc31.js"></script>
+    <script src="lib/cvsscalc40.js"></script>
+    <script src="popup.js"></script>
+
+    <!-- Custom Toast Notification -->
+    <div id="toast" class="toast-notification"></div>
+</body>
+
+</html>

@@ -1,0 +1,331 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.tab-content');
+    const vectorDisplay = document.getElementById('vector-string');
+    const scoreDisplay = document.getElementById('final-score');
+    const severityDisplay = document.getElementById('final-severity');
+    const emojiDisplay = document.getElementById('final-emoji');
+    const resetBtn = document.getElementById('reset-btn');
+
+    let currentTab = 'cvss3';
+
+    // Default fresh states
+    const defaultStates = {
+        cvss3: {
+            metrics: {
+                'AV': 'N', 'AC': 'L', 'PR': 'N', 'UI': 'N', 'S': 'U',
+                'C': 'N', 'I': 'N', 'A': 'N'
+            }
+        },
+        cvss4: {
+            metrics: {
+                'AV': 'N', 'AC': 'L', 'AT': 'N', 'PR': 'N', 'UI': 'N',
+                'VC': 'N', 'VI': 'N', 'VA': 'N', 'SC': 'N', 'SI': 'N', 'SA': 'N'
+            }
+        }
+    };
+
+    // Current working state
+    let state = JSON.parse(JSON.stringify(defaultStates));
+
+    function saveState() {
+        chrome.storage.local.set({ cvssState: state, activeTab: currentTab });
+    }
+
+    function loadState(callback) {
+        chrome.storage.local.get(['cvssState', 'activeTab'], (result) => {
+            if (result.cvssState) {
+                state = result.cvssState;
+            }
+            if (result.activeTab) {
+                currentTab = result.activeTab;
+            }
+            callback();
+        });
+    }
+
+    function updateUISelections() {
+        document.querySelectorAll('.metric-options').forEach(group => {
+            const metricGroup = group.dataset.metric; // e.g. "3_AV"
+            const [versionStr, metricName] = metricGroup.split('_');
+            const version = "cvss" + versionStr;
+            const currentVal = state[version].metrics[metricName];
+
+            group.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+            if (currentVal) {
+                const btn = group.querySelector(`[data-val="${currentVal}"]`);
+                if (btn) btn.classList.add('selected');
+            }
+        });
+    }
+
+    // Setup tab switching
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            tabs.forEach(t => t.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+            currentTab = tab.dataset.tab;
+
+            updateUISelections(); // ensure active tab shows correct selections if coming back
+            updateCalculations();
+
+            // Hide vector string on About tab
+            if (currentTab === 'about') {
+                document.querySelector('.vector-display-container').style.display = 'none';
+            } else {
+                document.querySelector('.vector-display-container').style.display = 'flex';
+            }
+
+            saveState();
+        });
+    });
+
+    const vectorInput = document.getElementById('vector-input');
+    const editVectorBtn = document.getElementById('edit-vector-btn');
+    const copiedBadge = document.getElementById('copied-badge');
+    const toast = document.getElementById('toast');
+
+    function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    // Setup copy to clipboard vs edit (differentiate single and double clicks)
+    let clickTimeout = null;
+    vectorDisplay.addEventListener('click', () => {
+        if (clickTimeout !== null) {
+            clearTimeout(clickTimeout);
+            clickTimeout = null;
+            startEdit(); // Double click
+        } else {
+            clickTimeout = setTimeout(() => {
+                clickTimeout = null;
+                // Single click logic (copy)
+                const text = vectorDisplay.textContent.trim();
+                navigator.clipboard.writeText(text).then(() => {
+                    copiedBadge.classList.add('show');
+                    setTimeout(() => {
+                        copiedBadge.classList.remove('show');
+                    }, 1500);
+                });
+            }, 250); // 250ms threshold
+        }
+    });
+
+    // Setup Edit Mode
+    const saveIconHTML = `<svg xmlns="http://www.3w.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-save"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`;
+    const editIconHTML = `✎`;
+
+    function startEdit() {
+        vectorDisplay.style.display = 'none';
+        vectorInput.style.display = 'block';
+        vectorInput.value = vectorDisplay.textContent.trim();
+        vectorInput.focus();
+        editVectorBtn.innerHTML = saveIconHTML;
+        editVectorBtn.title = "Save Vector String";
+    }
+
+    function stopEditAndSave() {
+        vectorInput.style.display = 'none';
+        vectorDisplay.style.display = 'block';
+        editVectorBtn.innerHTML = editIconHTML;
+        editVectorBtn.title = "Edit Vector String";
+
+        const newVector = vectorInput.value.trim();
+        if (!newVector) return;
+
+        try {
+            if (newVector.startsWith('CVSS:3.1/')) {
+                if (currentTab !== 'cvss3') {
+                    document.querySelector('.tab-btn[data-tab="cvss3"]').click();
+                }
+                // Parse v3 string
+                const metricsStr = newVector.replace('CVSS:3.1/', '');
+                const mArr = metricsStr.split('/');
+                mArr.forEach(m => {
+                    const [key, val] = m.split(':');
+                    if (state.cvss3.metrics[key] !== undefined) {
+                        state.cvss3.metrics[key] = val;
+                    }
+                });
+            } else if (newVector.startsWith('CVSS:4.0/')) {
+                if (currentTab !== 'cvss4') {
+                    document.querySelector('.tab-btn[data-tab="cvss4"]').click();
+                }
+                // Parse v4 string using the RedHat Vector class structure indirectly by rebuilding state
+                const metricsStr = newVector.replace('CVSS:4.0/', '');
+                const mArr = metricsStr.split('/');
+                mArr.forEach(m => {
+                    const [key, val] = m.split(':');
+                    if (state.cvss4.metrics[key] !== undefined) {
+                        state.cvss4.metrics[key] = val;
+                    }
+                });
+            } else {
+                showToast("Invalid vector string prefix. Must start with CVSS:3.1/ or CVSS:4.0/");
+                return;
+            }
+            updateUISelections();
+            updateCalculations();
+            saveState();
+        } catch (e) {
+            showToast("Error parsing vector string. Ensure proper format.");
+        }
+    }
+
+    editVectorBtn.addEventListener('click', () => {
+        if (vectorInput.style.display === 'block') {
+            stopEditAndSave();
+        } else {
+            startEdit();
+        }
+    });
+
+    vectorInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            stopEditAndSave();
+        } else if (e.key === 'Escape') {
+            // Cancel edit
+            vectorInput.style.display = 'none';
+            vectorDisplay.style.display = 'block';
+            editVectorBtn.textContent = '✎';
+        }
+    });
+
+    // Setup metric selection
+    document.querySelectorAll('.opt-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const parent = e.target.parentElement;
+            const metricGroup = parent.dataset.metric;
+            const [versionStr, metricName] = metricGroup.split('_');
+            const version = "cvss" + versionStr;
+
+            parent.querySelectorAll('.opt-btn').forEach(b => b.classList.remove('selected'));
+            e.target.classList.add('selected');
+
+            state[version].metrics[metricName] = e.target.dataset.val;
+            updateCalculations();
+            saveState();
+        });
+    });
+
+    // Setup Reset Button
+    resetBtn.addEventListener('click', () => {
+        state[currentTab] = JSON.parse(JSON.stringify(defaultStates[currentTab]));
+        updateUISelections();
+        updateCalculations();
+        saveState();
+    });
+
+    function getSeverityClass(score) {
+        if (score === 0) return 'sev-none';
+        if (score < 4.0) return 'sev-low';
+        if (score < 7.0) return 'sev-medium';
+        if (score < 9.0) return 'sev-high';
+        return 'sev-critical';
+    }
+
+    function getSeverityName(score) {
+        if (score === 0) return 'None';
+        if (score < 4.0) return 'Low';
+        if (score < 7.0) return 'Medium';
+        if (score < 9.0) return 'High';
+        return 'Critical';
+    }
+
+    function getSeverityEmoji(score) {
+        if (score === 0) return '😴';
+        if (score < 4.0) return '🥱';
+        if (score < 7.0) return '😬';
+        if (score < 9.0) return '😎';
+        return '🔥';
+    }
+
+    function updateCalculations() {
+        if (currentTab === 'cvss3') {
+            const m = state.cvss3.metrics;
+            // Using FIRST.org cvsscalc31.js CVSS31 namespace
+            if (typeof CVSS31 !== 'undefined') {
+                const result = CVSS31.calculateCVSSFromMetrics(
+                    m.AV, m.AC, m.PR, m.UI, m.S, m.C, m.I, m.A,
+                    "X", "X", "X", // Temporal
+                    "X", "X", "X", "X", "X", "X", "X", "X", "X", "X", "X" // Environmental
+                );
+
+                if (result.success) {
+                    updateUI(result.baseMetricScore, result.baseSeverity, result.vectorString);
+                } else {
+                    updateUI('Error', 'N/A', 'Invalid metrics');
+                }
+            } else {
+                updateUI('--', 'none', 'Error: CVSS3 library missing');
+            }
+        } else if (currentTab === 'cvss4') {
+            const m = state.cvss4.metrics;
+            // Using Red Hat cvss40.js CVSS40 class
+            if (typeof CVSS40 !== 'undefined') {
+                const vectorString = `CVSS:4.0/AV:${m.AV}/AC:${m.AC}/AT:${m.AT}/PR:${m.PR}/UI:${m.UI}/VC:${m.VC}/VI:${m.VI}/VA:${m.VA}/SC:${m.SC}/SI:${m.SI}/SA:${m.SA}`;
+                try {
+                    const vuln = new CVSS40(vectorString);
+                    updateUI(vuln.score.toFixed(1), getSeverityName(vuln.score), vuln.vector.raw);
+                } catch (e) {
+                    updateUI('Error', 'N/A', 'Invalid metrics');
+                }
+            } else {
+                updateUI('--', 'none', 'Error: CVSS4 library missing');
+            }
+        } else {
+            // About tab, do nothing
+        }
+    }
+
+    function updateUI(score, severity, vector) {
+        scoreDisplay.textContent = score;
+        severityDisplay.textContent = severity;
+        vectorDisplay.textContent = vector;
+
+        // Update colors and emoji
+        const numScore = parseFloat(score);
+        if (!isNaN(numScore)) {
+            scoreDisplay.className = 'score-value ' + getSeverityClass(numScore);
+            severityDisplay.className = 'score-severity ' + getSeverityClass(numScore);
+
+            if (numScore === 6.9) {
+                emojiDisplay.innerHTML = '<img src="images/69.jpeg" class="easter-egg-img" alt="6.9">';
+            } else if (numScore === 6.7) {
+                emojiDisplay.innerHTML = '<img src="images/67.webp" class="easter-egg-img" alt="6.7">';
+            } else {
+                emojiDisplay.textContent = getSeverityEmoji(numScore);
+            }
+        } else {
+            scoreDisplay.className = 'score-value';
+            severityDisplay.className = 'score-severity';
+            emojiDisplay.textContent = '❌';
+        }
+    }
+
+    // Initialize application state
+    loadState(() => {
+        // Activate correct tab based on saved state
+        tabs.forEach(t => t.classList.remove('active'));
+        sections.forEach(s => s.classList.remove('active'));
+        document.querySelector(`.tab-btn[data-tab="${currentTab}"]`).classList.add('active');
+        document.getElementById(currentTab).classList.add('active');
+
+        // Render UI
+        updateUISelections();
+        updateCalculations();
+
+        if (currentTab === 'about') {
+            document.querySelector('.vector-display-container').style.display = 'none';
+        } else {
+            document.querySelector('.vector-display-container').style.display = 'flex';
+        }
+    });
+});

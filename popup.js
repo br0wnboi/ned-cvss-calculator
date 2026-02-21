@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const severityDisplay = document.getElementById('final-severity');
     const emojiDisplay = document.getElementById('final-emoji');
     const resetBtn = document.getElementById('reset-btn');
+    const appVersionDisplay = document.getElementById('app-version');
+
+    if (appVersionDisplay) {
+        const manifest = chrome.runtime.getManifest();
+        appVersionDisplay.textContent = `v${manifest.version}`;
+    }
 
     let currentTab = 'cvss3';
 

@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!helpObj) return;
 
             // Apply to the metric heading/label itself
-            const label = metricDiv.querySelector('label');
+            const label = metricDiv.querySelector('.metric-label');
             const headingKey = metricName + "_Heading";
             if (label && helpObj[headingKey]) {
                 label.title = helpObj[headingKey];

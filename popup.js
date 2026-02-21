@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clickTimeout = setTimeout(() => {
                 clickTimeout = null;
                 // Single click logic (copy)
-                const text = vectorDisplay.textContent.trim();
+                const text = vectorDisplay.dataset.rawVector || vectorDisplay.textContent.trim();
 
                 if (text === 'Invalid metrics' || text.includes('Error') || text === '--') {
                     showToast('Cannot copy invalid vector string');
@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editIconHTML = `✎`;
 
     function startEdit() {
-        const text = vectorDisplay.textContent.trim();
+        const text = vectorDisplay.dataset.rawVector || vectorDisplay.textContent.trim();
         if (text === 'Invalid metrics' || text.includes('Error') || text === '--') {
             showToast("Cannot edit an invalid vector string");
             return;
@@ -343,6 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scoreDisplay.textContent = score;
         severityDisplay.textContent = severity;
         vectorDisplay.textContent = vector;
+        vectorDisplay.dataset.rawVector = vector;
 
         // Update colors and emoji
         const numScore = parseFloat(score);
@@ -411,6 +412,40 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function setupHoverHighlights() {
+        document.querySelectorAll('.metric').forEach(metricDiv => {
+            metricDiv.addEventListener('mouseenter', () => {
+                const optionsContainer = metricDiv.querySelector('.metric-options');
+                if (!optionsContainer) return;
+
+                const metricGroup = optionsContainer.dataset.metric;
+                if (!metricGroup) return;
+
+                const [, metricAbbr] = metricGroup.split('_'); // 'AV' etc
+
+                let rawText = vectorDisplay.dataset.rawVector;
+                if (!rawText || rawText === 'Invalid metrics' || rawText.includes('Error') || rawText === '--') return;
+
+                // Create a RegEx to find the exact metric attribute like "/AV:N/" or "/AV:N"
+                // The regex captures three parts: the prefix (slash or start), the metric chunk (e.g. AV:N), and suffix
+                const regex = new RegExp(`(^|/)(${metricAbbr}:[^/]+)`);
+                if (regex.test(rawText)) {
+                    // Wrap the match in our highlight span HTML
+                    const highlightedHTML = rawText.replace(regex, `$1<span class="vector-highlight">$2</span>`);
+                    vectorDisplay.innerHTML = highlightedHTML;
+                }
+            });
+
+            metricDiv.addEventListener('mouseleave', () => {
+                const rawText = vectorDisplay.dataset.rawVector;
+                if (rawText && vectorDisplay.innerHTML.includes('vector-highlight')) {
+                    // Restore unmodified raw vector
+                    vectorDisplay.textContent = rawText;
+                }
+            });
+        });
+    }
+
     // Initialize application state
     loadState(() => {
         // Activate correct tab based on saved state
@@ -423,6 +458,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUISelections();
         updateCalculations();
         applyHelpTextToButtons();
+        setupHoverHighlights();
 
         if (currentTab === 'about') {
             document.querySelector('.vector-display-container').style.display = 'none';

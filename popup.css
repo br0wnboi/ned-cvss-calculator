@@ -405,6 +405,17 @@ main::-webkit-scrollbar-thumb:hover {
     font-size: 0.9rem;
 }
 
+.about-image {
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin: -10px auto 24px auto;
+    display: block;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.4), 0 0 10px var(--accent-glow);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
 .info-card {
     background: var(--panel-bg);
     padding: 20px;

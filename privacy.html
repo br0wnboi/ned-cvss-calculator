@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Privacy Policy - Ned CVSS Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #0f172a;
+            --panel-bg: rgba(30, 41, 59, 0.7);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: var(--accent);
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-top: 24px;
+            color: var(--text-main);
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        a {
+            color: #10b981;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Privacy Policy</h1>
+        <p><strong>Effective Date:</strong> Today</p>
+
+        <h2>Overview</h2>
+        <p>Ned is a completely offline, client-side browser extension designed for privacy and speed.</p>
+
+        <h2>Data Collection</h2>
+        <p>This extension collects <strong>zero</strong> personal data, telemetry, or analytics. It makes absolutely no
+            external API calls to any servers. All CVSS calculations are processed locally within your browser using
+            embedded JavaScript libraries.</p>
+
+        <h2>Permissions</h2>
+        <p>The extension requires minimal permissions (like modifying clipboard data briefly when you click to copy a
+            vector string). It does not track your browsing history or access your web pages.</p>
+
+        <h2>Open Source</h2>
+        <p>You can verify this by viewing the <a href="https://github.com/br0wnboi/ned-cvss-calculator"
+                target="_blank">open-source code on GitHub</a>.</p>
+    </div>
+</body>
+
+</html>

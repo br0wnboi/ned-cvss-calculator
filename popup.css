@@ -450,6 +450,47 @@ main::-webkit-scrollbar-thumb:hover {
     line-height: 1.5;
 }
 
+.social-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.social-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.social-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.social-icon {
+    font-size: 1rem;
+    opacity: 0.8;
+}
+
+/* Modifier class ready for later when Ko-fi is uncommented */
+.kofi-btn:hover {
+    border-color: #fca5a5;
+    color: #fca5a5;
+}
+
 .credits {
     padding-top: 20px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);

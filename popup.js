@@ -145,14 +145,19 @@ document.addEventListener('DOMContentLoaded', () => {
         vectorInput.style.display = 'block';
         vectorInput.value = text;
         vectorInput.focus();
-        editVectorBtn.innerHTML = saveIconHTML;
+
+        // Safely parse SVG string to DOM element to avoid innerHTML
+        const parser = new DOMParser();
+        const svgDoc = parser.parseFromString(saveIconHTML, 'image/svg+xml');
+        editVectorBtn.replaceChildren(svgDoc.documentElement);
+
         editVectorBtn.title = "Save Vector String";
     }
 
     function stopEditAndSave() {
         vectorInput.style.display = 'none';
         vectorDisplay.style.display = 'block';
-        editVectorBtn.innerHTML = editIconHTML;
+        editVectorBtn.textContent = editIconHTML; // Safely set text content for edit icon
         editVectorBtn.title = "Edit Vector String";
 
         const newVector = vectorInput.value.trim();
@@ -358,9 +363,17 @@ document.addEventListener('DOMContentLoaded', () => {
             severityDisplay.className = 'score-severity ' + getSeverityClass(numScore);
 
             if (numScore === 6.9) {
-                emojiDisplay.innerHTML = '<img src="images/69.jpeg" class="easter-egg-img" alt="6.9">';
+                const img = document.createElement('img');
+                img.src = 'images/69.jpeg';
+                img.className = 'easter-egg-img';
+                img.alt = '6.9';
+                emojiDisplay.replaceChildren(img);
             } else if (numScore === 6.7) {
-                emojiDisplay.innerHTML = '<img src="images/67.webp" class="easter-egg-img" alt="6.7">';
+                const img = document.createElement('img');
+                img.src = 'images/67.webp';
+                img.className = 'easter-egg-img';
+                img.alt = '6.7';
+                emojiDisplay.replaceChildren(img);
             } else {
                 emojiDisplay.textContent = getSeverityEmoji(numScore);
             }
@@ -405,8 +418,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 // To be safe and idempotent, we check if it already has child elements
                 if (btn.children.length === 0) {
                     const shortName = btn.title || optVal;
-                    btn.innerHTML = `<span class="opt-val">${optVal}</span>
-                                     <span class="opt-name">${shortName}</span>`;
+                    btn.textContent = ''; // clear text
+
+                    const spanVal = document.createElement('span');
+                    spanVal.className = 'opt-val';
+                    spanVal.textContent = optVal;
+
+                    const spanName = document.createElement('span');
+                    spanName.className = 'opt-name';
+                    spanName.textContent = shortName;
+
+                    btn.appendChild(spanVal);
+                    btn.appendChild(spanName);
                 }
 
                 // Add the official FIRST.org long help text to the browser native tooltip
@@ -435,16 +458,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Create a RegEx to find the exact metric attribute like "/AV:N/" or "/AV:N"
                 // The regex captures three parts: the prefix (slash or start), the metric chunk (e.g. AV:N), and suffix
                 const regex = new RegExp(`(^|/)(${metricAbbr}:[^/]+)`);
-                if (regex.test(rawText)) {
-                    // Wrap the match in our highlight span HTML
-                    const highlightedHTML = rawText.replace(regex, `$1<span class="vector-highlight">$2</span>`);
-                    vectorDisplay.innerHTML = highlightedHTML;
+                const match = rawText.match(regex);
+                if (match) {
+                    const prefix = rawText.substring(0, match.index + match[1].length);
+                    const highlight = match[2];
+                    const suffix = rawText.substring(match.index + match[0].length);
+
+                    vectorDisplay.textContent = ''; // clear
+
+                    vectorDisplay.appendChild(document.createTextNode(prefix));
+
+                    const span = document.createElement('span');
+                    span.className = 'vector-highlight';
+                    span.textContent = highlight;
+                    vectorDisplay.appendChild(span);
+
+                    vectorDisplay.appendChild(document.createTextNode(suffix));
                 }
             });
 
             metricDiv.addEventListener('mouseleave', () => {
                 const rawText = vectorDisplay.dataset.rawVector;
-                if (rawText && vectorDisplay.innerHTML.includes('vector-highlight')) {
+                if (rawText && vectorDisplay.querySelector('.vector-highlight')) {
                     // Restore unmodified raw vector
                     vectorDisplay.textContent = rawText;
                 }
@@ -495,7 +530,11 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(err => {
             console.error('Error loading offline CWE data:', err);
-            resultsContainer.innerHTML = '<div class="cwe-empty-state">Failed to load offline dictionary. Please rebuild data.</div>';
+            resultsContainer.textContent = ''; // clear
+            const errDiv = document.createElement('div');
+            errDiv.className = 'cwe-empty-state';
+            errDiv.textContent = 'Failed to load offline dictionary. Please rebuild data.';
+            resultsContainer.appendChild(errDiv);
         });
 
     // Handle Search Bar Input
@@ -505,7 +544,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!query) {
                 // Return to empty state if search bar is cleared
-                resultsContainer.innerHTML = '<div class="cwe-empty-state">Type above to search MITRE CWEs...</div>';
+                resultsContainer.textContent = '';
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'cwe-empty-state';
+                emptyDiv.textContent = 'Type above to search MITRE CWEs...';
+                resultsContainer.appendChild(emptyDiv);
                 return;
             }
 
@@ -532,25 +575,46 @@ document.addEventListener('DOMContentLoaded', () => {
             const limit = Math.min(results.length, 15);
 
             if (limit === 0) {
-                resultsContainer.innerHTML = '<div class="cwe-empty-state">No matching vulnerabilities found.</div>';
+                resultsContainer.textContent = '';
+                const noneDiv = document.createElement('div');
+                noneDiv.className = 'cwe-empty-state';
+                noneDiv.textContent = 'No matching vulnerabilities found.';
+                resultsContainer.appendChild(noneDiv);
                 return;
             }
 
-            // Render matching items
-            let html = '';
+            // Render matching items safely without innerHTML
+            resultsContainer.textContent = ''; // clear previous
+
             for (let i = 0; i < limit; i++) {
                 const item = results[i].item;
-                const descEscaped = item.description ? item.description.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : 'No description available';
-                html += `
-                    <div class="cwe-result-item" title="Click to copy ${item.id}">
-                        <div class="cwe-result-header">
-                            <span class="cwe-id-badge">${item.id}</span>
-                        </div>
-                        <div class="cwe-name" title="${descEscaped}" style="text-decoration: underline dotted rgba(255, 255, 255, 0.3); cursor: help;">${item.name}</div>
-                    </div>
-                `;
+                const descEscaped = item.description ? item.description : 'No description available';
+
+                const resultItem = document.createElement('div');
+                resultItem.className = 'cwe-result-item';
+                resultItem.title = `Click to copy ${item.id}`;
+
+                const header = document.createElement('div');
+                header.className = 'cwe-result-header';
+
+                const badge = document.createElement('span');
+                badge.className = 'cwe-id-badge';
+                badge.textContent = item.id;
+
+                header.appendChild(badge);
+
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'cwe-name';
+                nameDiv.title = descEscaped;
+                nameDiv.style.textDecoration = 'underline dotted rgba(255, 255, 255, 0.3)';
+                nameDiv.style.cursor = 'help';
+                nameDiv.textContent = item.name;
+
+                resultItem.appendChild(header);
+                resultItem.appendChild(nameDiv);
+
+                resultsContainer.appendChild(resultItem);
             }
-            resultsContainer.innerHTML = html;
 
             // Bind click to copy logic for freshly generated results
             document.querySelectorAll('.cwe-result-item').forEach(el => {

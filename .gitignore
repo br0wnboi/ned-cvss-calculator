@@ -6,3 +6,5 @@ node_modules/
 .vscode/
 dev/
 .agents/
+store-materials.md
+*.zip

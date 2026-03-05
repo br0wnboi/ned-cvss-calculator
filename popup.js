@@ -78,8 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUISelections(); // ensure active tab shows correct selections if coming back
             updateCalculations();
 
-            // Hide vector string on About tab
-            if (currentTab === 'about') {
+            // Hide vector string on About and CWE tabs
+            if (currentTab === 'about' || currentTab === 'cwe') {
                 document.querySelector('.vector-display-container').style.display = 'none';
             } else {
                 document.querySelector('.vector-display-container').style.display = 'flex';
@@ -466,10 +466,101 @@ document.addEventListener('DOMContentLoaded', () => {
         applyHelpTextToButtons();
         setupHoverHighlights();
 
-        if (currentTab === 'about') {
+        if (currentTab === 'about' || currentTab === 'cwe') {
             document.querySelector('.vector-display-container').style.display = 'none';
         } else {
             document.querySelector('.vector-display-container').style.display = 'flex';
         }
     });
+
+    // --- CWE Fuzzy Search Integration ---
+    let fuseCWE = null;
+    let cweData = [];
+    const searchInput = document.getElementById('cwe-search-input');
+    const resultsContainer = document.getElementById('cwe-results');
+
+    // Fetch and initialize offline CWE dictionary
+    fetch(chrome.runtime.getURL('data/cwe-data.json'))
+        .then(response => response.json())
+        .then(data => {
+            cweData = data;
+            const options = {
+                keys: ['id', 'name', 'description'],
+                threshold: 0.3,     // 0 = exact match only, 1 = match anything
+                distance: 100,
+                includeScore: true,
+                minMatchCharLength: 2,
+            };
+            fuseCWE = new Fuse(cweData, options);
+        })
+        .catch(err => {
+            console.error('Error loading offline CWE data:', err);
+            resultsContainer.innerHTML = '<div class="cwe-empty-state">Failed to load offline dictionary. Please rebuild data.</div>';
+        });
+
+    // Handle Search Bar Input
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+
+            if (!query) {
+                // Return to empty state if search bar is cleared
+                resultsContainer.innerHTML = '<div class="cwe-empty-state">Type above to search MITRE CWEs...</div>';
+                return;
+            }
+
+            if (!fuseCWE) return; // Data not loaded yet
+
+            // Handle multiple queries separated by commas
+            let results = [];
+            if (query.includes(',')) {
+                const parts = query.split(',').map(p => p.trim()).filter(p => p);
+                const seenIds = new Set();
+                parts.forEach(part => {
+                    fuseCWE.search(part).forEach(res => {
+                        if (!seenIds.has(res.item.id)) {
+                            seenIds.add(res.item.id);
+                            results.push(res);
+                        }
+                    });
+                });
+            } else {
+                results = fuseCWE.search(query);
+            }
+
+            // Throttle rendering to max 15 items for performance and UX cleaniless
+            const limit = Math.min(results.length, 15);
+
+            if (limit === 0) {
+                resultsContainer.innerHTML = '<div class="cwe-empty-state">No matching vulnerabilities found.</div>';
+                return;
+            }
+
+            // Render matching items
+            let html = '';
+            for (let i = 0; i < limit; i++) {
+                const item = results[i].item;
+                const descEscaped = item.description ? item.description.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : 'No description available';
+                html += `
+                    <div class="cwe-result-item" title="Click to copy ${item.id}">
+                        <div class="cwe-result-header">
+                            <span class="cwe-id-badge">${item.id}</span>
+                        </div>
+                        <div class="cwe-name" title="${descEscaped}" style="text-decoration: underline dotted rgba(255, 255, 255, 0.3); cursor: help;">${item.name}</div>
+                    </div>
+                `;
+            }
+            resultsContainer.innerHTML = html;
+
+            // Bind click to copy logic for freshly generated results
+            document.querySelectorAll('.cwe-result-item').forEach(el => {
+                el.addEventListener('click', function () {
+                    const cweId = this.querySelector('.cwe-id-badge').textContent;
+                    navigator.clipboard.writeText(cweId).then(() => {
+                        showToast(`Copied ${cweId}`);
+                    });
+                });
+            });
+        });
+    }
 });

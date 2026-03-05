@@ -31,6 +31,7 @@
         <nav class="tabs">
             <button class="tab-btn active" data-tab="cvss3">CVSS 3.1</button>
             <button class="tab-btn" data-tab="cvss4">CVSS 4.0</button>
+            <button class="tab-btn" data-tab="cwe">CWE</button>
             <button class="tab-btn" data-tab="about">About</button>
         </nav>
 
@@ -225,6 +226,21 @@
                 </div>
             </section>
 
+            <!-- CWE Tab Content -->
+            <section id="cwe" class="tab-content">
+                <div class="cwe-container">
+                    <div class="cwe-search-header">
+                        <h2>CWE Search</h2>
+                        <input type="text" id="cwe-search-input" class="cwe-search-input"
+                            placeholder="Search vulnerability (e.g. SQL Injection...)" autocomplete="off">
+                    </div>
+                    <div id="cwe-results" class="cwe-results-list">
+                        <!-- Results injected here -->
+                        <div class="cwe-empty-state">Type above to search MITRE CWEs...</div>
+                    </div>
+                </div>
+            </section>
+
             <!-- About Tab Content -->
             <section id="about" class="tab-content">
                 <div class="about-container">
@@ -271,6 +287,7 @@
     <script src="lib/cvsscalc31_helptext.js"></script>
     <script src="lib/cvsscalc40.js"></script>
     <script src="lib/cvsscalc40_helptext.js"></script>
+    <script src="libs/fuse.min.js"></script>
     <script src="popup.js"></script>
 
     <!-- Custom Toast Notification -->

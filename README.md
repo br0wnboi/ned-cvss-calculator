@@ -5,8 +5,9 @@ Ned is a locally-run, browser extension for calculating Common Vulnerability Sco
 ## Features
 
 - **CVSS v3.1 & v4.0 Support**: Calculate scores using standard metrics for both versions.
-- **Privacy-First (Offline)**: All calculations run locally in your browser. No external API calls are made.
-- **Copy Vector Strings**: A single click on the vector string instantly copies it to your clipboard.
+- **MITRE CWE Offline Search**: Quickly map vulnerabilities using the built-in, offline fuzzy search tab (includes hover descriptions for weaknesses).
+- **Privacy-First (Offline)**: All calculations and searches run locally in your browser. No external API calls are made.
+- **Copy Vector Strings / IDs**: A single click instantly copies a vector string or a CWE ID to your clipboard.
 - **Edit & Parse Strings**: Double-click or click the edit icon to paste preexisting vector strings, updating all the metric UI buttons dynamically.
 - **State Saving**: The extension remembers your previous score calculations and tab selection even when closed.
 
@@ -29,6 +30,7 @@ Ned is a locally-run, browser extension for calculating Common Vulnerability Sco
 - Built by **br0wnboi**
 - [CVSS v3.1 Calculator Module](https://www.first.org/cvss/calculator/cvsscalc31.js) - Copyright (c) 2019, FIRST.ORG, INC. (BSD-2-Clause)
 - [CVSS v4.0 Calculator Module](https://github.com/RedHatProductSecurity/cvss-v4-calculator) - Copyright FIRST, Red Hat, and contributors. (SPDX: BSD-2-Clause)
+- [Fuse.js](https://fusejs.io) - Copyright (c) 2024 Kiro Risk (Apache-2.0)
 
 ## License
 

@@ -633,9 +633,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         const altTerms = document.createElement('div');
                         altTerms.className = 'cwe-alt-terms';
 
-                        // Parse multiline text properly and handle labels
-                        const termsFormatted = item.alternate_terms.split('\n').filter(t => t.trim() !== '').join('<br>');
-                        altTerms.innerHTML = `<strong>Alternate Terms:</strong><br>${termsFormatted}`;
+                        const strong = document.createElement('strong');
+                        strong.textContent = 'Alternate Terms:';
+                        altTerms.appendChild(strong);
+                        altTerms.appendChild(document.createElement('br'));
+
+                        const termsLines = item.alternate_terms.split('\n').filter(t => t.trim() !== '');
+                        termsLines.forEach((line, index) => {
+                            altTerms.appendChild(document.createTextNode(line));
+                            if (index < termsLines.length - 1) {
+                                altTerms.appendChild(document.createElement('br'));
+                            }
+                        });
                         details.appendChild(altTerms);
                     }
 
@@ -643,8 +652,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         const extDesc = document.createElement('div');
                         extDesc.className = 'cwe-extended-desc';
                         // Split by newlines so MITRE's formatting maps cleanly to HTML
-                        const textFormatted = item.extended_description.split('\n').filter(p => p.trim() !== '').join('<br><br>');
-                        extDesc.innerHTML = textFormatted;
+                        const descLines = item.extended_description.split('\n').filter(p => p.trim() !== '');
+                        descLines.forEach((line, index) => {
+                            extDesc.appendChild(document.createTextNode(line));
+                            if (index < descLines.length - 1) {
+                                extDesc.appendChild(document.createElement('br'));
+                                extDesc.appendChild(document.createElement('br'));
+                            }
+                        });
                         details.appendChild(extDesc);
                     }
 

@@ -4,6 +4,7 @@ import csv
 import json
 import urllib.request
 import zipfile
+import re
 
 # URL for MITRE CWE list (Research Concepts)
 CWE_URL = "https://cwe.mitre.org/data/csv/1000.csv.zip"
@@ -64,12 +65,41 @@ def fetch_and_parse_cwe():
                 cwe_id = row.get('CWE-ID')
                 name = row.get('Name')
                 description = row.get('Description')
+                extended_description = row.get('Extended Description')
+                
+                raw_alt_terms = row.get('Alternate Terms') or ""
+                clean_alt_terms = ""
+                
+                if raw_alt_terms:
+                    # Clean the raw string inline by replacing tags with newlines and labels
+                    # MITRE format: ::TERM:Zip Slip:DESCRIPTION:some explanation::
+                    cleaned = raw_alt_terms
+                    
+                    # Remove trailing ::
+                    if cleaned.endswith("::"):
+                        cleaned = cleaned[:-2]
+                        
+                    # Remove leading ::
+                    if cleaned.startswith("::"):
+                        cleaned = cleaned[2:]
+                        
+                    # Replace internal tags
+                    cleaned = cleaned.replace("::TERM:", "\n- ")
+                    cleaned = cleaned.replace("TERM:", "- ")
+                    cleaned = cleaned.replace(":DESCRIPTION:", ": ")
+                    
+                    # Clean up multiple newlines or trailing spaces
+                    clean_alt_terms = "\n".join([line.strip() for line in cleaned.splitlines() if line.strip()])
+                
+                alternate_terms = clean_alt_terms
                 
                 if cwe_id and name:
                     parsed_data.append({
                         "id": f"CWE-{cwe_id}",
                         "name": name,
-                        "description": description or ""
+                        "description": description or "",
+                        "extended_description": extended_description or "",
+                        "alternate_terms": alternate_terms
                     })
                     
             print(f"Parsed {len(parsed_data)} CWE entries.")

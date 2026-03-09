@@ -507,6 +507,41 @@ main::-webkit-scrollbar-thumb:hover {
     margin-top: 8px;
 }
 
+.cwe-details {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.cwe-details summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 4px;
+    user-select: none;
+    outline: none;
+}
+
+.cwe-details summary:hover {
+    color: var(--bg-hover);
+}
+
+.cwe-extended-desc, .cwe-alt-terms {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+    line-height: 1.5;
+    white-space: normal;
+}
+
+.cwe-alt-terms strong {
+    color: var(--text-color);
+}
+
 /* CWE Tab Styles */
 .cwe-container {
     display: flex;

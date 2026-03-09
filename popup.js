@@ -520,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             cweData = data;
             const options = {
-                keys: ['id', 'name', 'description'],
+                keys: ['id', 'name', 'description', 'extended_description', 'alternate_terms'],
                 threshold: 0.3,     // 0 = exact match only, 1 = match anything
                 distance: 100,
                 includeScore: true,
@@ -612,6 +612,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 resultItem.appendChild(header);
                 resultItem.appendChild(nameDiv);
+
+                // Add extended details if they exist
+                if ((item.extended_description && item.extended_description.trim() !== '') ||
+                    (item.alternate_terms && item.alternate_terms.trim() !== '')) {
+
+                    const details = document.createElement('details');
+                    details.className = 'cwe-details';
+
+                    // Stop click-to-copy propagation when interacting with the details block
+                    details.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+
+                    const summary = document.createElement('summary');
+                    summary.textContent = 'More Info';
+                    details.appendChild(summary);
+
+                    if (item.alternate_terms && item.alternate_terms.trim() !== '') {
+                        const altTerms = document.createElement('div');
+                        altTerms.className = 'cwe-alt-terms';
+
+                        // Parse multiline text properly and handle labels
+                        const termsFormatted = item.alternate_terms.split('\n').filter(t => t.trim() !== '').join('<br>');
+                        altTerms.innerHTML = `<strong>Alternate Terms:</strong><br>${termsFormatted}`;
+                        details.appendChild(altTerms);
+                    }
+
+                    if (item.extended_description && item.extended_description.trim() !== '') {
+                        const extDesc = document.createElement('div');
+                        extDesc.className = 'cwe-extended-desc';
+                        // Split by newlines so MITRE's formatting maps cleanly to HTML
+                        const textFormatted = item.extended_description.split('\n').filter(p => p.trim() !== '').join('<br><br>');
+                        extDesc.innerHTML = textFormatted;
+                        details.appendChild(extDesc);
+                    }
+
+                    resultItem.appendChild(details);
+                }
 
                 resultsContainer.appendChild(resultItem);
             }

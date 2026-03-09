@@ -11,6 +11,13 @@ Ned is a locally-run, browser extension for calculating Common Vulnerability Sco
 - **Edit & Parse Strings**: Double-click or click the edit icon to paste preexisting vector strings, updating all the metric UI buttons dynamically.
 - **State Saving**: The extension remembers your previous score calculations and tab selection even when closed.
 
+### Previews
+<div style="display: flex; flex-direction: row; gap: 10px;">
+  <img src="images/store/Ned-3.1.png" width="30%" alt="CVSS 3.1">
+  <img src="images/store/Ned-4.0.png" width="30%" alt="CVSS 4.0">
+  <img src="images/store/Ned-CWE.png" width="30%" alt="CWE Search">
+</div>
+
 ## Installation
 
 ### Chromium (Chrome, Brave, Edge, etc.)

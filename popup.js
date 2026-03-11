@@ -246,6 +246,16 @@ document.addEventListener('DOMContentLoaded', () => {
             vectorInput.style.display = 'none';
             vectorDisplay.style.display = 'block';
             editVectorBtn.textContent = '✎';
+            editVectorBtn.title = "Edit Vector String";
+        }
+    });
+
+    vectorInput.addEventListener('blur', (e) => {
+        // If we're clicking the edit/save button itself, let its own click handler handle things
+        if (e.relatedTarget === editVectorBtn) return;
+        
+        if (vectorInput.style.display === 'block') {
+            stopEditAndSave();
         }
     });
 

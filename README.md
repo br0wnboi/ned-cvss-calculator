@@ -24,7 +24,8 @@ Ned is a locally-run, browser extension for calculating Common Vulnerability Sco
 
 The easiest way to install Ned is to download it directly from your browser's official extension store:
 
-Install on Chrome/Edge/Brave: [Chrome Web Store](https://chromewebstore.google.com/detail/ned-cvss-calculator/ociocfepdnpdfjllilphdddkkelmpnkd)
+Install on Chrome/Brave/Chromium: [Chrome Web Store](https://chromewebstore.google.com/detail/ned-cvss-calculator/ociocfepdnpdfjllilphdddkkelmpnkd)
+Install on Edge: [Microsoft Edge Addons](https://microsoftedge.microsoft.com/addons/detail/ned-cvss-calculator/nfjninogbnocfmijciibgckgpkpfbgii)
 Install on Firefox: [Firefox Add-ons](https://addons.mozilla.org/en-GB/firefox/addon/ned-cvss-calculator/)
 
 ### Manual Installation (Development)

@@ -12,13 +12,22 @@
     <div class="app-container">
         <header>
             <h1>Ned <span class="subtitle">CVSS Calculator</span><span id="app-version" class="app-version"></span></h1>
-            <div class="score-display">
+            <div class="score-display" id="score-display-container">
                 <span class="score-emoji" id="final-emoji">😴</span>
                 <span class="score-value" id="final-score">0.0</span>
                 <span class="score-severity" id="final-severity">None</span>
-                <button id="reset-btn" class="icon-btn" title="Reset score">↻</button>
+                <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+                    <button id="first-link-btn" class="first-redirect-btn" title="Open in FIRST.org Calculator">
+                        FIRST <svg xmlns="http://www.3w.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 2px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    </button>
+                    <button id="reset-btn" class="icon-btn" title="Reset score" style="margin-left: 0; transform: rotate(15deg);">↻</button>
+                </div>
             </div>
+            <!-- Header Title Elements Removed for Compactness -->
+
+
             <div class="vector-display-container">
+                <span id="header-lock-icon" title="Read-only mode">🔒</span>
                 <button id="edit-vector-btn" class="icon-btn" title="Edit Vector String">✎</button>
                 <div class="vector-display" id="vector-string" title="Click to copy, Double click to edit">
                     CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N
@@ -230,9 +239,19 @@
             <section id="cwe" class="tab-content">
                 <div class="cwe-container">
                     <div class="cwe-search-header">
-                        <h2>CWE Search</h2>
+                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                            <h2>CWE Search</h2>
+                            <div id="cwe-metadata" class="cwe-meta">CWE Database v4.14 | Loading...</div>
+                        </div>
                         <input type="text" id="cwe-search-input" class="cwe-search-input"
                             placeholder="Search vulnerability (e.g. SQL Injection...)" autocomplete="off">
+                        <div class="cwe-quick-filters">
+                            <span class="cwe-chip">XSS</span>
+                            <span class="cwe-chip">Injection</span>
+                            <span class="cwe-chip">Auth</span>
+                            <span class="cwe-chip">Memory</span>
+                            <span class="cwe-chip">Buffer</span>
+                        </div>
                     </div>
                     <div id="cwe-results" class="cwe-results-list">
                         <!-- Results injected here -->
@@ -270,14 +289,18 @@
                             <span class="social-icon">𝕏</span> Profile
                         </a>
                         <!-- Placeholder for Support: Uncomment when ready -->
-                        <!-- <a href="https://ko-fi.com/br0wnboi" target="_blank" class="social-btn kofi-btn">
-                             <span class="social-icon">☕</span> Buy me a coffee
-                        </a> -->
-                    </div>
+                        <!-- <a href="your-kofi-link" target="_blank" class="social-btn kofi-btn">
+                        <span class="social-icon">☕</span> Support
+                    </a> -->
+                </div>
 
-                    <div class="credits">
+                <div class="credits">
                         <p>Made by <strong>br0wnboi</strong> • <a href="privacy.html" target="_blank"
-                                class="privacy-link">Privacy Policy</a></p>
+                                class="privacy-link">Privacy Policy</a> <span style="opacity: 0.5;">•</span> 
+                            <a href="#" id="clear-data-btn" class="privacy-link" style="color: #fca5a5;" title="Clear Local Storage">
+                                Clear Data
+                            </a>
+                        </p>
                     </div>
                 </div>
             </section>

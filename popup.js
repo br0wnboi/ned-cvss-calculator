@@ -38,16 +38,28 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.storage.local.set({ cvssState: state, activeTab: currentTab });
     }
 
+    let recentCWEs = []; // Global history array
+
     function loadState(callback) {
-        chrome.storage.local.get(['cvssState', 'activeTab'], (result) => {
+        chrome.storage.local.get(['cvssState', 'activeTab', 'recentCWEs'], (result) => {
             if (result.cvssState) {
                 state = result.cvssState;
             }
             if (result.activeTab) {
                 currentTab = result.activeTab;
             }
+            if (result.recentCWEs) {
+                recentCWEs = result.recentCWEs;
+            }
             callback();
         });
+    }
+
+    function saveRecentCWE(cweId) {
+        recentCWEs = recentCWEs.filter(id => id !== cweId);
+        recentCWEs.unshift(cweId);
+        if (recentCWEs.length > 5) recentCWEs = recentCWEs.slice(0, 5);
+        chrome.storage.local.set({ recentCWEs });
     }
 
     function updateUISelections() {
@@ -78,11 +90,12 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUISelections(); // ensure active tab shows correct selections if coming back
             updateCalculations();
 
-            // Hide vector string on About and CWE tabs
-            if (currentTab === 'about' || currentTab === 'cwe') {
-                document.querySelector('.vector-display-container').style.display = 'none';
+            const headerEl = document.querySelector('header');
+
+            if (currentTab === 'cwe' || currentTab === 'about') {
+                headerEl.classList.add('readonly-mode');
             } else {
-                document.querySelector('.vector-display-container').style.display = 'flex';
+                headerEl.classList.remove('readonly-mode');
             }
 
             saveState();
@@ -91,8 +104,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const vectorInput = document.getElementById('vector-input');
     const editVectorBtn = document.getElementById('edit-vector-btn');
+    const firstLinkBtn = document.getElementById('first-link-btn');
     const copiedBadge = document.getElementById('copied-badge');
     const toast = document.getElementById('toast');
+
+    if (firstLinkBtn) {
+        firstLinkBtn.addEventListener('click', () => {
+            const rawText = vectorDisplay.dataset.rawVector || vectorDisplay.textContent.trim();
+            if (rawText === 'Invalid metrics' || rawText.includes('Error') || rawText === '--') {
+                showToast("Cannot open an invalid vector string");
+                return;
+            }
+            if (currentTab === 'cvss3') {
+                window.open(`https://www.first.org/cvss/calculator/3.1#${rawText}`, '_blank');
+            } else if (currentTab === 'cvss4') {
+                window.open(`https://www.first.org/cvss/calculator/4.0#${rawText}`, '_blank');
+            }
+        });
+    }
 
     function showToast(message) {
         toast.textContent = message;
@@ -253,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
     vectorInput.addEventListener('blur', (e) => {
         // If we're clicking the edit/save button itself, let its own click handler handle things
         if (e.relatedTarget === editVectorBtn) return;
-        
+
         if (vectorInput.style.display === 'block') {
             stopEditAndSave();
         }
@@ -297,6 +326,21 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCalculations();
         saveState();
     });
+
+    // Setup Clear Data Form Button
+    const clearDataBtn = document.getElementById('clear-data-btn');
+    if (clearDataBtn) {
+        clearDataBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const confirmed = window.confirm("Are you sure you want to clear all extension data? This will reset all CVSS scores and clear your recently copied CWE history.");
+            if (confirmed) {
+                chrome.storage.local.clear(() => {
+                    alert("Data cleared successfully. The extension will now refresh.");
+                    window.location.reload();
+                });
+            }
+        });
+    }
 
     function getSeverityClass(score) {
         if (score === 0) return 'sev-none';
@@ -345,11 +389,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const m = state.cvss4.metrics;
             // Using Red Hat cvss40.js CVSS40 class
             if (typeof CVSS40 !== 'undefined') {
-                const vectorString = `CVSS:4.0/AV:${m.AV}/AC:${m.AC}/AT:${m.AT}/PR:${m.PR}/UI:${m.UI}/VC:${m.VC}/VI:${m.VI}/VA:${m.VA}/SC:${m.SC}/SI:${m.SI}/SA:${m.SA}`;
+                // Map metrics to the official vector string format
+                // Note: 'S' (Safety) is technically an Environmental override in the spec
+                // The library strictly validates SI/SA as N,L,H but allows MSI/MSA to be S.
+                const siKey = m.SI === 'S' ? 'MSI' : 'SI';
+                const saKey = m.SA === 'S' ? 'MSA' : 'SA';
+
+                // Construct vector with mandatory base metrics, substituting MSI/MSA if Safety is selected
+                let vectorString = `CVSS:4.0/AV:${m.AV}/AC:${m.AC}/AT:${m.AT}/PR:${m.PR}/UI:${m.UI}/VC:${m.VC}/VI:${m.VI}/VA:${m.VA}/SC:${m.SC}/${siKey}:${m.SI}/${saKey}:${m.SA}`;
+
                 try {
                     const vuln = new CVSS40(vectorString);
                     updateUI(vuln.score.toFixed(1), getSeverityName(vuln.score), vuln.vector.raw);
                 } catch (e) {
+                    console.error("CVSS4 Calculation Error:", e);
                     updateUI('Error', 'N/A', 'Invalid metrics');
                 }
             } else {
@@ -511,10 +564,12 @@ document.addEventListener('DOMContentLoaded', () => {
         applyHelpTextToButtons();
         setupHoverHighlights();
 
-        if (currentTab === 'about' || currentTab === 'cwe') {
-            document.querySelector('.vector-display-container').style.display = 'none';
+        const headerEl = document.querySelector('header');
+
+        if (currentTab === 'cwe' || currentTab === 'about') {
+            headerEl.classList.add('readonly-mode');
         } else {
-            document.querySelector('.vector-display-container').style.display = 'flex';
+            headerEl.classList.remove('readonly-mode');
         }
     });
 
@@ -528,7 +583,17 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch(chrome.runtime.getURL('data/cwe-data.json'))
         .then(response => response.json())
         .then(data => {
-            cweData = data;
+            let version = '4.14';
+            let entries = [];
+
+            if (Array.isArray(data)) {
+                entries = data;
+            } else if (data && data.entries) {
+                entries = data.entries;
+                version = data.version || '4.14';
+            }
+
+            cweData = entries;
             const options = {
                 keys: ['id', 'name', 'description', 'extended_description', 'alternate_terms'],
                 threshold: 0.3,     // 0 = exact match only, 1 = match anything
@@ -537,6 +602,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 minMatchCharLength: 2,
             };
             fuseCWE = new Fuse(cweData, options);
+
+            const metaDiv = document.getElementById('cwe-metadata');
+            if (metaDiv) metaDiv.textContent = `CWE Database v${version} | ${entries.length} Weaknesses`;
+
+            if (searchInput && searchInput.value.trim() === '') {
+                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
         })
         .catch(err => {
             console.error('Error loading offline CWE data:', err);
@@ -547,18 +619,56 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsContainer.appendChild(errDiv);
         });
 
+    // Handle Quick Filter Chips
+    document.querySelectorAll('.cwe-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = chip.textContent;
+                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+    });
+
     // Handle Search Bar Input
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const query = e.target.value.trim();
 
             if (!query) {
-                // Return to empty state if search bar is cleared
+                // Return to empty state or history if search bar is cleared
                 resultsContainer.textContent = '';
-                const emptyDiv = document.createElement('div');
-                emptyDiv.className = 'cwe-empty-state';
-                emptyDiv.textContent = 'Type above to search MITRE CWEs...';
-                resultsContainer.appendChild(emptyDiv);
+                if (recentCWEs && recentCWEs.length > 0 && cweData.length > 0) {
+                    const historyHeader = document.createElement('div');
+                    historyHeader.className = 'cwe-history-header';
+
+                    const titleSpan = document.createElement('span');
+                    titleSpan.textContent = 'Recently Copied';
+
+                    const clearBtn = document.createElement('span');
+                    clearBtn.className = 'cwe-history-clear';
+                    clearBtn.textContent = 'Clear';
+                    clearBtn.addEventListener('click', () => {
+                        recentCWEs = [];
+                        chrome.storage.local.set({ recentCWEs });
+                        searchInput.dispatchEvent(new Event('input', { bubbles: true })); // Re-trigger
+                    });
+
+                    historyHeader.appendChild(titleSpan);
+                    historyHeader.appendChild(clearBtn);
+                    resultsContainer.appendChild(historyHeader);
+
+                    const historyResults = recentCWEs.map(id => {
+                        const item = cweData.find(c => c.id === id);
+                        return item ? { item } : null;
+                    }).filter(Boolean);
+
+                    renderCWEResults(historyResults.slice(0, 5));
+                } else {
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.className = 'cwe-empty-state';
+                    emptyDiv.textContent = 'Type above to search MITRE CWEs...';
+                    resultsContainer.appendChild(emptyDiv);
+                }
                 return;
             }
 
@@ -595,97 +705,133 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Render matching items safely without innerHTML
             resultsContainer.textContent = ''; // clear previous
+            renderCWEResults(results.slice(0, limit));
+        });
+    }
 
-            for (let i = 0; i < limit; i++) {
-                const item = results[i].item;
-                const descEscaped = item.description ? item.description : 'No description available';
+    function renderCWEResults(resultsArray) {
+        for (let i = 0; i < resultsArray.length; i++) {
+            const item = resultsArray[i].item;
+            const descEscaped = item.description ? item.description : 'No description available';
 
-                const resultItem = document.createElement('div');
-                resultItem.className = 'cwe-result-item';
-                resultItem.title = `Click to copy ${item.id}`;
+            const resultItem = document.createElement('div');
+            resultItem.className = 'cwe-result-item';
+            resultItem.title = `Click to copy ${item.id}`;
 
-                const header = document.createElement('div');
-                header.className = 'cwe-result-header';
+            const header = document.createElement('div');
+            header.className = 'cwe-result-header';
 
-                const badge = document.createElement('span');
-                badge.className = 'cwe-id-badge';
-                badge.textContent = item.id;
+            const headerLeft = document.createElement('div');
+            headerLeft.style.display = 'flex';
+            headerLeft.style.alignItems = 'center';
+            headerLeft.style.gap = '8px';
 
-                header.appendChild(badge);
+            const badge = document.createElement('span');
+            badge.className = 'cwe-id-badge';
+            badge.textContent = item.id;
 
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'cwe-name';
-                nameDiv.title = descEscaped;
-                nameDiv.style.textDecoration = 'underline dotted rgba(255, 255, 255, 0.3)';
-                nameDiv.style.cursor = 'help';
-                nameDiv.textContent = item.name;
+            const linkBtn = document.createElement('a');
+            linkBtn.innerHTML = '<svg xmlns="http://www.3w.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>';
+            linkBtn.style.color = 'var(--text-muted)';
+            linkBtn.style.transition = 'var(--transition)';
+            linkBtn.style.display = 'flex';
+            linkBtn.style.alignItems = 'center';
+            linkBtn.style.padding = '2px';
+            linkBtn.title = `Open ${item.id} on cwe.mitre.org`;
+            linkBtn.target = '_blank';
+            const cweNum = item.id.replace('CWE-', '');
+            linkBtn.href = `https://cwe.mitre.org/data/definitions/${cweNum}.html`;
 
-                resultItem.appendChild(header);
-                resultItem.appendChild(nameDiv);
+            linkBtn.addEventListener('mouseenter', () => {
+                linkBtn.style.color = 'var(--accent)';
+            });
+            linkBtn.addEventListener('mouseleave', () => {
+                linkBtn.style.color = 'var(--text-muted)';
+            });
 
-                // Add extended details if they exist
-                if ((item.extended_description && item.extended_description.trim() !== '') ||
-                    (item.alternate_terms && item.alternate_terms.trim() !== '')) {
+            linkBtn.addEventListener('click', (e) => {
+                e.stopPropagation(); // prevent row click (copy)
+            });
 
-                    const details = document.createElement('details');
-                    details.className = 'cwe-details';
+            headerLeft.appendChild(badge);
+            headerLeft.appendChild(linkBtn);
+            header.appendChild(headerLeft);
 
-                    // Stop click-to-copy propagation when interacting with the details block
-                    details.addEventListener('click', (e) => {
-                        e.stopPropagation();
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'cwe-name';
+            nameDiv.title = descEscaped;
+            nameDiv.style.textDecoration = 'underline dotted rgba(255, 255, 255, 0.3)';
+            nameDiv.style.cursor = 'help';
+            nameDiv.textContent = item.name;
+
+            resultItem.appendChild(header);
+            resultItem.appendChild(nameDiv);
+
+            // Add extended details if they exist
+            if ((item.extended_description && item.extended_description.trim() !== '') ||
+                (item.alternate_terms && item.alternate_terms.trim() !== '')) {
+
+                const details = document.createElement('details');
+                details.className = 'cwe-details';
+
+                // Stop click-to-copy propagation when interacting with the details block
+                details.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+
+                const summary = document.createElement('summary');
+                summary.textContent = 'More Info';
+                details.appendChild(summary);
+
+                if (item.alternate_terms && item.alternate_terms.trim() !== '') {
+                    const altTerms = document.createElement('div');
+                    altTerms.className = 'cwe-alt-terms';
+
+                    const strong = document.createElement('strong');
+                    strong.textContent = 'Alternate Terms:';
+                    altTerms.appendChild(strong);
+                    altTerms.appendChild(document.createElement('br'));
+
+                    const termsLines = item.alternate_terms.split('\n').filter(t => t.trim() !== '');
+                    termsLines.forEach((line, index) => {
+                        altTerms.appendChild(document.createTextNode(line));
+                        if (index < termsLines.length - 1) {
+                            altTerms.appendChild(document.createElement('br'));
+                        }
                     });
-
-                    const summary = document.createElement('summary');
-                    summary.textContent = 'More Info';
-                    details.appendChild(summary);
-
-                    if (item.alternate_terms && item.alternate_terms.trim() !== '') {
-                        const altTerms = document.createElement('div');
-                        altTerms.className = 'cwe-alt-terms';
-
-                        const strong = document.createElement('strong');
-                        strong.textContent = 'Alternate Terms:';
-                        altTerms.appendChild(strong);
-                        altTerms.appendChild(document.createElement('br'));
-
-                        const termsLines = item.alternate_terms.split('\n').filter(t => t.trim() !== '');
-                        termsLines.forEach((line, index) => {
-                            altTerms.appendChild(document.createTextNode(line));
-                            if (index < termsLines.length - 1) {
-                                altTerms.appendChild(document.createElement('br'));
-                            }
-                        });
-                        details.appendChild(altTerms);
-                    }
-
-                    if (item.extended_description && item.extended_description.trim() !== '') {
-                        const extDesc = document.createElement('div');
-                        extDesc.className = 'cwe-extended-desc';
-                        // Split by newlines so MITRE's formatting maps cleanly to HTML
-                        const descLines = item.extended_description.split('\n').filter(p => p.trim() !== '');
-                        descLines.forEach((line, index) => {
-                            extDesc.appendChild(document.createTextNode(line));
-                            if (index < descLines.length - 1) {
-                                extDesc.appendChild(document.createElement('br'));
-                                extDesc.appendChild(document.createElement('br'));
-                            }
-                        });
-                        details.appendChild(extDesc);
-                    }
-
-                    resultItem.appendChild(details);
+                    details.appendChild(altTerms);
                 }
 
-                resultsContainer.appendChild(resultItem);
+                if (item.extended_description && item.extended_description.trim() !== '') {
+                    const extDesc = document.createElement('div');
+                    extDesc.className = 'cwe-extended-desc';
+                    // Split by newlines so MITRE's formatting maps cleanly to HTML
+                    const descLines = item.extended_description.split('\n').filter(p => p.trim() !== '');
+                    descLines.forEach((line, index) => {
+                        extDesc.appendChild(document.createTextNode(line));
+                        if (index < descLines.length - 1) {
+                            extDesc.appendChild(document.createElement('br'));
+                            extDesc.appendChild(document.createElement('br'));
+                        }
+                    });
+                    details.appendChild(extDesc);
+                }
+
+                resultItem.appendChild(details);
             }
 
-            // Bind click to copy logic for freshly generated results
-            document.querySelectorAll('.cwe-result-item').forEach(el => {
-                el.addEventListener('click', function () {
-                    const cweId = this.querySelector('.cwe-id-badge').textContent;
-                    navigator.clipboard.writeText(cweId).then(() => {
-                        showToast(`Copied ${cweId}`);
-                    });
+            resultsContainer.appendChild(resultItem);
+        }
+
+        resultsContainer.querySelectorAll('.cwe-result-item').forEach(el => {
+            if (el.dataset.bound) return;
+            el.dataset.bound = 'true';
+
+            el.addEventListener('click', function () {
+                const cweId = this.querySelector('.cwe-id-badge').textContent;
+                navigator.clipboard.writeText(cweId).then(() => {
+                    showToast(`Copied ${cweId}`);
+                    saveRecentCWE(cweId);
                 });
             });
         });

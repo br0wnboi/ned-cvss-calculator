@@ -56,7 +56,23 @@ def fetch_and_parse_cwe():
             if header_idx == -1:
                 print("Could not find standard 'CWE-ID' column in CSV.")
                 return
-                
+
+            # Fetch the current version from the CWE homepage, as newer CSVs lack the header
+            version = "Unknown"
+            print("Attempting to detect latest CWE version from mitre.org...")
+            try:
+                req = urllib.request.Request('https://cwe.mitre.org/', headers={'User-Agent': 'Mozilla/5.0'})
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    html = response.read().decode('utf-8', errors='ignore')
+                    version_match = re.search(r"Version\s+([\d\.]+)", html)
+                    if version_match:
+                        version = version_match.group(1)
+                        print(f"Detected CWE Version: {version}")
+                    else:
+                        print("Could not detect version string on homepage.")
+            except Exception as e:
+                print(f"Warning: Failed to detect version - {e}")
+
             csv_lines = lines[header_idx:]
             reader = csv.DictReader(csv_lines)
             
@@ -109,7 +125,10 @@ def fetch_and_parse_cwe():
             os.makedirs(os.path.dirname(target_json_path), exist_ok=True)
             
             with open(target_json_path, 'w', encoding='utf-8') as out_f:
-                json.dump(parsed_data, out_f) # Minified json
+                json.dump({
+                    "version": version,
+                    "entries": parsed_data
+                }, out_f) # Minified json
                 
             print("Done!")
 

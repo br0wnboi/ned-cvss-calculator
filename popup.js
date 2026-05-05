@@ -621,12 +621,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Quick Filter Chips
     document.querySelectorAll('.cwe-chip').forEach(chip => {
+        if (chip.id === 'semantic-test-btn') return;
         chip.addEventListener('click', () => {
             if (searchInput) {
                 searchInput.value = chip.textContent;
                 searchInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
         });
+    });
+
+    const semanticBtn = document.getElementById('semantic-test-btn');
+    const semanticStatus = document.getElementById('semantic-status');
+
+    if (semanticBtn) {
+        semanticBtn.addEventListener('click', () => {
+            const query = searchInput?.value.trim();
+            if (!query) {
+                showToast("Please enter a description to search.");
+                return;
+            }
+
+            semanticStatus.style.display = 'block';
+            semanticStatus.textContent = 'Initializing AI...';
+            resultsContainer.textContent = ''; 
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'cwe-empty-state';
+            loadingDiv.textContent = 'Running semantic match...';
+            resultsContainer.appendChild(loadingDiv);
+
+            chrome.runtime.sendMessage({ target: 'offscreen', action: 'SEMANTIC_SEARCH', query }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error("Messaging Error:", chrome.runtime.lastError);
+                    semanticStatus.textContent = 'Error: ' + chrome.runtime.lastError.message;
+                    resultsContainer.textContent = ''; 
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'cwe-empty-state';
+                    errorDiv.textContent = 'Failed to connect to ML worker.';
+                    resultsContainer.appendChild(errorDiv);
+                    return;
+                }
+                
+                if (response && response.success) {
+                    semanticStatus.style.display = 'none';
+                    resultsContainer.textContent = '';
+                    const mappedResults = response.results.map(r => ({
+                        item: {
+                            id: r.id,
+                            name: `${r.name} [Match: ${(r.score * 100).toFixed(1)}%]`,
+                            description: '' // Simplified for testing
+                        }
+                    }));
+                    renderCWEResults(mappedResults);
+                } else {
+                    semanticStatus.textContent = 'Search failed: ' + (response?.error || 'Unknown error');
+                }
+            });
+        });
+    }
+
+    chrome.runtime.onMessage.addListener((msg) => {
+        if (msg.type === 'SEMANTIC_STATUS' && semanticStatus) {
+            semanticStatus.textContent = msg.status;
+        }
     });
 
     // Handle Search Bar Input

@@ -39,9 +39,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let recentCWEs = []; // Global history array
+    let recentQueries = []; // User's previous text searches
 
     function loadState(callback) {
-        chrome.storage.local.get(['cvssState', 'activeTab', 'recentCWEs'], (result) => {
+        chrome.storage.local.get(['cvssState', 'activeTab', 'recentCWEs', 'recentQueries'], (result) => {
             if (result.cvssState) {
                 state = result.cvssState;
             }
@@ -50,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (result.recentCWEs) {
                 recentCWEs = result.recentCWEs;
+            }
+            if (result.recentQueries) {
+                recentQueries = result.recentQueries;
             }
             callback();
         });
@@ -60,6 +64,14 @@ document.addEventListener('DOMContentLoaded', () => {
         recentCWEs.unshift(cweId);
         if (recentCWEs.length > 5) recentCWEs = recentCWEs.slice(0, 5);
         chrome.storage.local.set({ recentCWEs });
+    }
+
+    function saveRecentQuery(query) {
+        if (!query || query.length < 3) return;
+        recentQueries = recentQueries.filter(q => q.toLowerCase() !== query.toLowerCase());
+        recentQueries.unshift(query);
+        if (recentQueries.length > 5) recentQueries = recentQueries.slice(0, 5);
+        chrome.storage.local.set({ recentQueries });
     }
 
     function updateUISelections() {
@@ -238,6 +250,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else {
                             hasInvalidValue = true;
                         }
+                    } else if (key === 'MSI' && val === 'S') {
+                        state.cvss4.metrics['SI'] = 'S';
+                    } else if (key === 'MSA' && val === 'S') {
+                        state.cvss4.metrics['SA'] = 'S';
                     }
                 });
 
@@ -392,11 +408,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Map metrics to the official vector string format
                 // Note: 'S' (Safety) is technically an Environmental override in the spec
                 // The library strictly validates SI/SA as N,L,H but allows MSI/MSA to be S.
-                const siKey = m.SI === 'S' ? 'MSI' : 'SI';
-                const saKey = m.SA === 'S' ? 'MSA' : 'SA';
+                const siVal = m.SI === 'S' ? 'N' : m.SI;
+                const saVal = m.SA === 'S' ? 'N' : m.SA;
 
-                // Construct vector with mandatory base metrics, substituting MSI/MSA if Safety is selected
-                let vectorString = `CVSS:4.0/AV:${m.AV}/AC:${m.AC}/AT:${m.AT}/PR:${m.PR}/UI:${m.UI}/VC:${m.VC}/VI:${m.VI}/VA:${m.VA}/SC:${m.SC}/${siKey}:${m.SI}/${saKey}:${m.SA}`;
+                // Construct vector with all 11 mandatory base metrics
+                let vectorString = `CVSS:4.0/AV:${m.AV}/AC:${m.AC}/AT:${m.AT}/PR:${m.PR}/UI:${m.UI}/VC:${m.VC}/VI:${m.VI}/VA:${m.VA}/SC:${m.SC}/SI:${siVal}/SA:${saVal}`;
+                
+                // Append MSI/MSA environmental metrics at the end if Safety is selected
+                if (m.SI === 'S') vectorString += `/MSI:S`;
+                if (m.SA === 'S') vectorString += `/MSA:S`;
 
                 try {
                     const vuln = new CVSS40(vectorString);
@@ -662,15 +682,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 
                 if (response && response.success) {
+                    saveRecentQuery(query);
                     semanticStatus.style.display = 'none';
                     resultsContainer.textContent = '';
-                    const mappedResults = response.results.map(r => ({
-                        item: {
-                            id: r.id,
-                            name: `${r.name} [Match: ${(r.score * 100).toFixed(1)}%]`,
-                            description: '' // Simplified for testing
-                        }
-                    }));
+                    const mappedResults = response.results.map(r => {
+                        const actualCwe = cweData.find(c => c.id === r.id) || { id: r.id, name: r.name };
+                        return {
+                            item: {
+                                ...actualCwe,
+                                name: `${actualCwe.name} [Match: ${(r.score * 100).toFixed(1)}%]`
+                            }
+                        };
+                    });
                     renderCWEResults(mappedResults);
                 } else {
                     semanticStatus.textContent = 'Search failed: ' + (response?.error || 'Unknown error');
@@ -686,82 +709,86 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Handle Search Bar Input
+    let searchTimeout = null;
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.trim();
+            if (searchTimeout) clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = e.target.value.trim();
 
-            if (!query) {
-                // Return to empty state or history if search bar is cleared
-                resultsContainer.textContent = '';
-                if (recentCWEs && recentCWEs.length > 0 && cweData.length > 0) {
-                    const historyHeader = document.createElement('div');
-                    historyHeader.className = 'cwe-history-header';
+                if (!query) {
+                    // Return to empty state or history if search bar is cleared
+                    resultsContainer.textContent = '';
+                    if (recentCWEs && recentCWEs.length > 0 && cweData.length > 0) {
+                        const historyHeader = document.createElement('div');
+                        historyHeader.className = 'cwe-history-header';
 
-                    const titleSpan = document.createElement('span');
-                    titleSpan.textContent = 'Recently Copied';
+                        const titleSpan = document.createElement('span');
+                        titleSpan.textContent = 'Recently Copied';
 
-                    const clearBtn = document.createElement('span');
-                    clearBtn.className = 'cwe-history-clear';
-                    clearBtn.textContent = 'Clear';
-                    clearBtn.addEventListener('click', () => {
-                        recentCWEs = [];
-                        chrome.storage.local.set({ recentCWEs });
-                        searchInput.dispatchEvent(new Event('input', { bubbles: true })); // Re-trigger
-                    });
+                        const clearBtn = document.createElement('span');
+                        clearBtn.className = 'cwe-history-clear';
+                        clearBtn.textContent = 'Clear';
+                        clearBtn.addEventListener('click', () => {
+                            recentCWEs = [];
+                            chrome.storage.local.set({ recentCWEs });
+                            searchInput.dispatchEvent(new Event('input', { bubbles: true })); // Re-trigger
+                        });
 
-                    historyHeader.appendChild(titleSpan);
-                    historyHeader.appendChild(clearBtn);
-                    resultsContainer.appendChild(historyHeader);
+                        historyHeader.appendChild(titleSpan);
+                        historyHeader.appendChild(clearBtn);
+                        resultsContainer.appendChild(historyHeader);
 
-                    const historyResults = recentCWEs.map(id => {
-                        const item = cweData.find(c => c.id === id);
-                        return item ? { item } : null;
-                    }).filter(Boolean);
+                        const historyResults = recentCWEs.map(id => {
+                            const item = cweData.find(c => c.id === id);
+                            return item ? { item } : null;
+                        }).filter(Boolean);
 
-                    renderCWEResults(historyResults.slice(0, 5));
-                } else {
-                    const emptyDiv = document.createElement('div');
-                    emptyDiv.className = 'cwe-empty-state';
-                    emptyDiv.textContent = 'Type above to search MITRE CWEs...';
-                    resultsContainer.appendChild(emptyDiv);
+                        renderCWEResults(historyResults.slice(0, 5));
+                    } else {
+                        const emptyDiv = document.createElement('div');
+                        emptyDiv.className = 'cwe-empty-state';
+                        emptyDiv.textContent = 'Type above to search MITRE CWEs...';
+                        resultsContainer.appendChild(emptyDiv);
+                    }
+                    return;
                 }
-                return;
-            }
 
-            if (!fuseCWE) return; // Data not loaded yet
+                if (!fuseCWE) return; // Data not loaded yet
 
-            // Handle multiple queries separated by commas
-            let results = [];
-            if (query.includes(',')) {
-                const parts = query.split(',').map(p => p.trim()).filter(p => p);
-                const seenIds = new Set();
-                parts.forEach(part => {
-                    fuseCWE.search(part).forEach(res => {
-                        if (!seenIds.has(res.item.id)) {
-                            seenIds.add(res.item.id);
-                            results.push(res);
-                        }
+                // Handle multiple queries separated by commas
+                let results = [];
+                if (query.includes(',')) {
+                    const parts = query.split(',').map(p => p.trim()).filter(p => p);
+                    const seenIds = new Set();
+                    parts.forEach(part => {
+                        fuseCWE.search(part).forEach(res => {
+                            if (!seenIds.has(res.item.id)) {
+                                seenIds.add(res.item.id);
+                                results.push(res);
+                            }
+                        });
                     });
-                });
-            } else {
-                results = fuseCWE.search(query);
-            }
+                } else {
+                    results = fuseCWE.search(query);
+                }
 
-            // Throttle rendering to max 15 items for performance and UX cleaniless
-            const limit = Math.min(results.length, 15);
+                // Throttle rendering to max 15 items for performance and UX cleaniless
+                const limit = Math.min(results.length, 15);
 
-            if (limit === 0) {
-                resultsContainer.textContent = '';
-                const noneDiv = document.createElement('div');
-                noneDiv.className = 'cwe-empty-state';
-                noneDiv.textContent = 'No matching vulnerabilities found.';
-                resultsContainer.appendChild(noneDiv);
-                return;
-            }
+                if (limit === 0) {
+                    resultsContainer.textContent = '';
+                    const noneDiv = document.createElement('div');
+                    noneDiv.className = 'cwe-empty-state';
+                    noneDiv.textContent = 'No matching vulnerabilities found.';
+                    resultsContainer.appendChild(noneDiv);
+                    return;
+                }
 
-            // Render matching items safely without innerHTML
-            resultsContainer.textContent = ''; // clear previous
-            renderCWEResults(results.slice(0, limit));
+                // Render matching items safely without innerHTML
+                resultsContainer.textContent = ''; // clear previous
+                renderCWEResults(results.slice(0, limit));
+            }, 300); // 300ms debounce
         });
     }
 
@@ -890,6 +917,82 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveRecentCWE(cweId);
                 });
             });
+        });
+    }
+
+    // --- CVSS Translation Logic ---
+    const btnTo4 = document.getElementById('translate-to-4');
+    const btnTo3 = document.getElementById('translate-to-3');
+
+    if (btnTo4) {
+        btnTo4.addEventListener('click', () => {
+            const m3 = state.cvss3.metrics;
+            const m4 = state.cvss4.metrics;
+
+            m4.AV = m3.AV;
+            m4.AC = m3.AC;
+            m4.PR = m3.PR;
+            m4.AT = 'N'; // New metric in 4.0, default to None
+            m4.UI = m3.UI === 'R' ? 'P' : 'N'; // R -> P (Passive is safe approximation)
+            
+            // Map Vulnerable System Impacts directly
+            m4.VC = m3.C;
+            m4.VI = m3.I;
+            m4.VA = m3.A;
+
+            // Map Subsequent System Impacts if Scope was Changed
+            if (m3.S === 'C') {
+                m4.SC = m3.C;
+                m4.SI = m3.I;
+                m4.SA = m3.A;
+            } else {
+                m4.SC = 'N';
+                m4.SI = 'N';
+                m4.SA = 'N';
+            }
+
+            updateUISelections();
+            updateCalculations();
+            saveState();
+            document.querySelector('.tab-btn[data-tab="cvss4"]').click();
+            showToast("Approximated to CVSS 4.0");
+        });
+    }
+
+    if (btnTo3) {
+        btnTo3.addEventListener('click', () => {
+            const m4 = state.cvss4.metrics;
+            const m3 = state.cvss3.metrics;
+
+            m3.AV = m4.AV;
+            m3.AC = m4.AC;
+            m3.PR = m4.PR;
+            
+            // UI mapping
+            m3.UI = (m4.UI === 'P' || m4.UI === 'A') ? 'R' : 'N';
+
+            // Scope mapping based on any subsequent impacts (or safety)
+            const subsequentImpact = (m4.SC !== 'N' || m4.SI !== 'N' || m4.SA !== 'N' || m4.SI === 'S' || m4.SA === 'S');
+            m3.S = subsequentImpact ? 'C' : 'U';
+
+            // Impact mapping (max of Vulnerable vs Subsequent)
+            const severityOrder = { 'N': 0, 'L': 1, 'H': 2 };
+            const maxSev = (v1, v2) => {
+                // Safety 'S' maps to High for approximation
+                const val1 = v1 === 'S' ? 'H' : v1;
+                const val2 = v2 === 'S' ? 'H' : v2;
+                return severityOrder[val1] >= severityOrder[val2] ? val1 : val2;
+            };
+
+            m3.C = maxSev(m4.VC, m4.SC);
+            m3.I = maxSev(m4.VI, m4.SI);
+            m3.A = maxSev(m4.VA, m4.SA);
+
+            updateUISelections();
+            updateCalculations();
+            saveState();
+            document.querySelector('.tab-btn[data-tab="cvss3"]').click();
+            showToast("Approximated to CVSS 3.1");
         });
     }
 });

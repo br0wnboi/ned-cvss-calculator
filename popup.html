@@ -315,10 +315,22 @@
     <script src="lib/cvsscalc40.js"></script>
     <script src="lib/cvsscalc40_helptext.js"></script>
     <script src="lib/fuse.min.js"></script>
+    <script src="lib/translation.js"></script>
     <script src="popup.js"></script>
 
     <!-- Custom Toast Notification -->
     <div id="toast" class="toast-notification"></div>
+
+    <!-- Translation Disclaimer Modal -->
+    <div id="translation-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Translation Warning</h3>
+            <p>CVSS version translations are <strong>mathematical approximations</strong>, not exact conversions.</p>
+            <p>Metrics like <em>Scope (S)</em> and <em>Attack Requirements (AT)</em> map differently between versions. The translated score may over- or under-estimate severity.</p>
+            <p><strong>Always review the resulting vector manually.</strong></p>
+            <button id="translation-modal-ack" class="ack-btn">I understand</button>
+        </div>
+    </div>
 </body>
 
 </html>

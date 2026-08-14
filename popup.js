@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let currentTab = 'cvss3';
+    let justTranslated = false;
+    let hasSeenTranslationWarning = false;
 
     // Default fresh states
     const defaultStates = {
@@ -35,14 +37,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let state = JSON.parse(JSON.stringify(defaultStates));
 
     function saveState() {
-        chrome.storage.local.set({ cvssState: state, activeTab: currentTab });
+        chrome.storage.local.set({ cvssState: state, activeTab: currentTab, hasSeenTranslationWarning });
     }
 
     let recentCWEs = []; // Global history array
     let recentQueries = []; // User's previous text searches
 
     function loadState(callback) {
-        chrome.storage.local.get(['cvssState', 'activeTab', 'recentCWEs', 'recentQueries'], (result) => {
+        chrome.storage.local.get(['cvssState', 'activeTab', 'recentCWEs', 'recentQueries', 'hasSeenTranslationWarning'], (result) => {
             if (result.cvssState) {
                 state = result.cvssState;
             }
@@ -55,7 +57,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.recentQueries) {
                 recentQueries = result.recentQueries;
             }
-            callback();
+            if (result.hasSeenTranslationWarning) {
+                hasSeenTranslationWarning = result.hasSeenTranslationWarning;
+            }
+            if (callback) callback();
         });
     }
 
@@ -135,8 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function showToast(message) {
+    function showToast(message, type = 'success') {
         toast.textContent = message;
+        if (type === 'warning') {
+            toast.classList.add('warning');
+        } else {
+            toast.classList.remove('warning');
+        }
         toast.classList.add('show');
         setTimeout(() => {
             toast.classList.remove('show');
@@ -158,6 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (text === 'Invalid metrics' || text.includes('Error') || text === '--') {
                     showToast('Cannot copy invalid vector string');
+                    return;
+                }
+
+                if (justTranslated) {
+                    showToast("Warning: You are copying an approximated vector. Please review it first.", "warning");
                     return;
                 }
 
@@ -309,6 +324,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             const actualBtn = e.target.closest('.opt-btn');
             if (!actualBtn) return;
+            
+            justTranslated = false;
 
             const parent = actualBtn.parentElement;
             const metricGroup = parent.dataset.metric;
@@ -923,76 +940,74 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CVSS Translation Logic ---
     const btnTo4 = document.getElementById('translate-to-4');
     const btnTo3 = document.getElementById('translate-to-3');
+    const modal = document.getElementById('translation-modal');
+    const modalAck = document.getElementById('translation-modal-ack');
+
+    let pendingTranslationAction = null;
+
+    if (modalAck) {
+        modalAck.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            hasSeenTranslationWarning = true;
+            saveState();
+            if (pendingTranslationAction) {
+                pendingTranslationAction();
+                pendingTranslationAction = null;
+            }
+        });
+    }
+
+    function handleTranslation(action) {
+        if (!hasSeenTranslationWarning) {
+            pendingTranslationAction = action;
+            modal.classList.remove('hidden');
+        } else {
+            action();
+        }
+    }
 
     if (btnTo4) {
         btnTo4.addEventListener('click', () => {
-            const m3 = state.cvss3.metrics;
-            const m4 = state.cvss4.metrics;
+            handleTranslation(() => {
+                const m3 = state.cvss3.metrics;
+                const newM4 = window.CVSS_Translation.translate3to4(m3);
+                Object.assign(state.cvss4.metrics, newM4);
 
-            m4.AV = m3.AV;
-            m4.AC = m3.AC;
-            m4.PR = m3.PR;
-            m4.AT = 'N'; // New metric in 4.0, default to None
-            m4.UI = m3.UI === 'R' ? 'P' : 'N'; // R -> P (Passive is safe approximation)
-            
-            // Map Vulnerable System Impacts directly
-            m4.VC = m3.C;
-            m4.VI = m3.I;
-            m4.VA = m3.A;
-
-            // Map Subsequent System Impacts if Scope was Changed
-            if (m3.S === 'C') {
-                m4.SC = m3.C;
-                m4.SI = m3.I;
-                m4.SA = m3.A;
-            } else {
-                m4.SC = 'N';
-                m4.SI = 'N';
-                m4.SA = 'N';
-            }
-
-            updateUISelections();
-            updateCalculations();
-            saveState();
-            document.querySelector('.tab-btn[data-tab="cvss4"]').click();
-            showToast("Approximated to CVSS 4.0");
+                updateUISelections();
+                updateCalculations();
+                saveState();
+                document.querySelector('.tab-btn[data-tab="cvss4"]').click();
+                
+                justTranslated = true;
+                if (m3.S === 'C') {
+                    showToast("Approximated to CVSS 4.0 — Subsequent System impacts may need review.", "warning");
+                } else {
+                    showToast("Approximated. Please review manually!", "warning");
+                }
+            });
         });
     }
 
     if (btnTo3) {
         btnTo3.addEventListener('click', () => {
-            const m4 = state.cvss4.metrics;
-            const m3 = state.cvss3.metrics;
+            handleTranslation(() => {
+                const m4 = state.cvss4.metrics;
+                const newM3 = window.CVSS_Translation.translate4to3(m4);
+                Object.assign(state.cvss3.metrics, newM3);
 
-            m3.AV = m4.AV;
-            m3.AC = m4.AC;
-            m3.PR = m4.PR;
-            
-            // UI mapping
-            m3.UI = (m4.UI === 'P' || m4.UI === 'A') ? 'R' : 'N';
-
-            // Scope mapping based on any subsequent impacts (or safety)
-            const subsequentImpact = (m4.SC !== 'N' || m4.SI !== 'N' || m4.SA !== 'N' || m4.SI === 'S' || m4.SA === 'S');
-            m3.S = subsequentImpact ? 'C' : 'U';
-
-            // Impact mapping (max of Vulnerable vs Subsequent)
-            const severityOrder = { 'N': 0, 'L': 1, 'H': 2 };
-            const maxSev = (v1, v2) => {
-                // Safety 'S' maps to High for approximation
-                const val1 = v1 === 'S' ? 'H' : v1;
-                const val2 = v2 === 'S' ? 'H' : v2;
-                return severityOrder[val1] >= severityOrder[val2] ? val1 : val2;
-            };
-
-            m3.C = maxSev(m4.VC, m4.SC);
-            m3.I = maxSev(m4.VI, m4.SI);
-            m3.A = maxSev(m4.VA, m4.SA);
-
-            updateUISelections();
-            updateCalculations();
-            saveState();
-            document.querySelector('.tab-btn[data-tab="cvss3"]').click();
-            showToast("Approximated to CVSS 3.1");
+                updateUISelections();
+                updateCalculations();
+                saveState();
+                document.querySelector('.tab-btn[data-tab="cvss3"]').click();
+                
+                justTranslated = true;
+                const subsequentImpact = (m4.SC !== 'N' || m4.SI !== 'N' || m4.SA !== 'N' || m4.SI === 'S' || m4.SA === 'S');
+                if (subsequentImpact) {
+                    showToast("Approximated to CVSS 3.1 — Scope and Impacts may need review.", "warning");
+                } else {
+                    showToast("Approximated. Please review manually!", "warning");
+                }
+            });
         });
     }
 });

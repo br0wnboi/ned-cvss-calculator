@@ -498,6 +498,72 @@ main::-webkit-scrollbar-thumb:hover {
     line-height: 1.5;
 }
 
+.cwe-extended-desc {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.4;
+}
+
+/* Translation Disclaimer Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--accent-color);
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 80%;
+    text-align: center;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: #ef4444;
+}
+
+.modal-content p {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 10px 0;
+}
+
+.ack-btn {
+    margin-top: 15px;
+    padding: 8px 16px;
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.ack-btn:hover {
+    background: var(--accent-hover);
+}
+
+.toast.warning {
+    background: #f59e0b;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
 .social-links {
     display: flex;
     flex-wrap: wrap;

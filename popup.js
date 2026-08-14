@@ -238,6 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else {
                             hasInvalidValue = true;
                         }
+                    } else if (key === 'MSI' && val === 'S') {
+                        state.cvss4.metrics['SI'] = 'S';
+                    } else if (key === 'MSA' && val === 'S') {
+                        state.cvss4.metrics['SA'] = 'S';
                     }
                 });
 
@@ -392,11 +396,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Map metrics to the official vector string format
                 // Note: 'S' (Safety) is technically an Environmental override in the spec
                 // The library strictly validates SI/SA as N,L,H but allows MSI/MSA to be S.
-                const siKey = m.SI === 'S' ? 'MSI' : 'SI';
-                const saKey = m.SA === 'S' ? 'MSA' : 'SA';
+                const siVal = m.SI === 'S' ? 'N' : m.SI;
+                const saVal = m.SA === 'S' ? 'N' : m.SA;
 
-                // Construct vector with mandatory base metrics, substituting MSI/MSA if Safety is selected
-                let vectorString = `CVSS:4.0/AV:${m.AV}/AC:${m.AC}/AT:${m.AT}/PR:${m.PR}/UI:${m.UI}/VC:${m.VC}/VI:${m.VI}/VA:${m.VA}/SC:${m.SC}/${siKey}:${m.SI}/${saKey}:${m.SA}`;
+                // Construct vector with all 11 mandatory base metrics
+                let vectorString = `CVSS:4.0/AV:${m.AV}/AC:${m.AC}/AT:${m.AT}/PR:${m.PR}/UI:${m.UI}/VC:${m.VC}/VI:${m.VI}/VA:${m.VA}/SC:${m.SC}/SI:${siVal}/SA:${saVal}`;
+                
+                // Append MSI/MSA environmental metrics at the end if Safety is selected
+                if (m.SI === 'S') vectorString += `/MSI:S`;
+                if (m.SA === 'S') vectorString += `/MSA:S`;
 
                 try {
                     const vuln = new CVSS40(vectorString);

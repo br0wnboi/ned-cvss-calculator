@@ -2,9 +2,10 @@
     "manifest_version": 3,
     "name": "Ned - CVSS Calculator",
     "version": "1.5.0",
-    "description": "Calculate CVSS 3.1 & 4.0 scores directly. Completely offline, with a built-in MITRE CWE database for fuzzy searching.",
+    "description": "Calculate CVSS 3.1 and 4.0 scores offline, with a built-in MITRE CWE database for fuzzy searching.",
     "action": {
         "default_popup": "popup.html",
+        "default_title": "Open Ned - CVSS Calculator",
         "default_icon": {
             "16": "icons/icon16.png",
             "48": "icons/icon48.png",

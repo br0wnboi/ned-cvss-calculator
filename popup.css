@@ -48,14 +48,23 @@ header {
     z-index: 10;
 }
 
+.header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
 h1 {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-main);
     letter-spacing: 0.5px;
-    margin-bottom: 12px;
+    margin-bottom: 0;
     display: flex;
     align-items: baseline;
+    flex-wrap: wrap;
 }
 
 .subtitle {
@@ -72,6 +81,39 @@ h1 {
     color: var(--text-muted);
     margin-left: 6px;
     opacity: 0.6;
+}
+
+.language-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lang-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.lang-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.lang-btn.active {
+    color: #ffffff;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
 }
 
 .score-display {

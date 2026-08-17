@@ -37,6 +37,50 @@
             color: var(--accent);
         }
 
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .page-header h1 {
+            margin-bottom: 0;
+        }
+
+        .language-switcher {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .lang-btn:hover {
+            color: var(--text-main);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .lang-btn.active {
+            color: #ffffff;
+            background: var(--accent);
+        }
+
         h2 {
             font-size: 1.2rem;
             margin-top: 24px;
@@ -61,26 +105,31 @@
 
 <body>
     <div class="container">
-        <h1>Privacy Policy</h1>
-        <p><strong>Effective Date:</strong> Today</p>
+        <div class="page-header">
+            <h1 data-i18n="privacyTitle">Privacy Policy</h1>
+            <div class="language-switcher" role="group" data-i18n-aria-label="switchLanguage">
+                <button type="button" class="lang-btn" data-lang="en" title="English">EN</button>
+                <button type="button" class="lang-btn" data-lang="zh_CN" title="简体中文">中文</button>
+            </div>
+        </div>
+        <p><strong data-i18n="effectiveDateLabel">Effective Date:</strong> <span data-i18n="effectiveDateValue">August 17, 2026</span></p>
 
-        <h2>Overview</h2>
-        <p>Ned is a completely offline, client-side browser extension designed for privacy and speed.</p>
+        <h2 data-i18n="privacyOverviewHeading">Overview</h2>
+        <p data-i18n="privacyOverviewBody">Ned is a completely offline, client-side browser extension designed for privacy and speed.</p>
 
-        <h2>Data Collection</h2>
-        <p>This extension collects <strong>zero</strong> personal data, telemetry, or analytics. It makes absolutely no
-            external API calls to any servers. All CVSS calculations are processed locally within your browser using
-            embedded JavaScript libraries.</p>
-        <p><em>Besides, even if I had your data which btw I don't, I still wouldn't know what to do with it :)</em></p>
+        <h2 data-i18n="privacyDataCollectionHeading">Data Collection</h2>
+        <p data-i18n="privacyDataCollectionBody">This extension collects zero personal data, telemetry, or analytics. It does not call external APIs. All CVSS calculations run locally in your browser through embedded JavaScript libraries.</p>
 
-        <h2>Permissions</h2>
-        <p>The extension requires minimal permissions (like modifying clipboard data briefly when you click to copy a
-            vector string). It does not track your browsing history or access your web pages.</p>
+        <h2 data-i18n="privacyPermissionsHeading">Permissions</h2>
+        <p data-i18n="privacyPermissionsBody">The extension uses minimal permissions, including local storage and clipboard copy support when you choose to copy a vector string or CWE ID. It does not track browsing history or read web page content.</p>
 
-        <h2>Open Source</h2>
-        <p>You can verify this by viewing the <a href="https://github.com/br0wnboi/ned-cvss-calculator"
-                target="_blank">open-source code on GitHub</a>.</p>
+        <h2 data-i18n="privacyOpenSourceHeading">Open Source</h2>
+        <p><span data-i18n="privacyOpenSourcePrefix">You can verify this in the</span> <a href="https://github.com/br0wnboi/ned-cvss-calculator"
+                target="_blank" data-i18n="privacyGithubLinkText">open-source repository on GitHub</a>.</p>
     </div>
+
+    <script src="lib/localization.js"></script>
+    <script src="privacy.js"></script>
 </body>
 
 </html>

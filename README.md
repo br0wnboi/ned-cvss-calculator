@@ -1,10 +1,13 @@
 # Ned - CVSS Calculator
 
+[English](README.md) | [简体中文](README_CN.md)
+
 Ned is a locally-run, browser extension for calculating Common Vulnerability Scoring System (CVSS) v3.1 and v4.0 scores directly from your popup. Designed with privacy in mind, all official FIRST.org and Red Hat javascript calculations run entirely offline.
 
 ## Features
 
 - **CVSS v3.1 & v4.0 Support**: Calculate scores using standard metrics for both versions.
+- **English / Chinese Toggle**: Switch the popup and privacy page between English and Simplified Chinese.
 - **MITRE CWE Offline Search**: Quickly map vulnerabilities using the built-in, offline fuzzy search tab (includes hover descriptions for weaknesses).
 - **Privacy-First (Offline)**: All calculations and searches run locally in your browser. No external API calls are made.
 - **Copy Vector Strings / IDs**: A single click instantly copies a vector string or a CWE ID to your clipboard.

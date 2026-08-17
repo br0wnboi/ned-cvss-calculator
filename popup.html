@@ -11,44 +11,50 @@
 <body>
     <div class="app-container">
         <header>
-            <h1>Ned <span class="subtitle">CVSS Calculator</span><span id="app-version" class="app-version"></span></h1>
+            <div class="header-top">
+                <h1>Ned <span class="subtitle" data-i18n="appSubtitle">CVSS Calculator</span><span id="app-version" class="app-version"></span></h1>
+                <div class="language-switcher" role="group" data-i18n-aria-label="switchLanguage">
+                    <button type="button" class="lang-btn" data-lang="en" title="English">EN</button>
+                    <button type="button" class="lang-btn" data-lang="zh_CN" title="简体中文">中文</button>
+                </div>
+            </div>
             <div class="score-display" id="score-display-container">
                 <span class="score-emoji" id="final-emoji">😴</span>
                 <span class="score-value" id="final-score">0.0</span>
                 <span class="score-severity" id="final-severity">None</span>
                 <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
-                    <button id="first-link-btn" class="first-redirect-btn" title="Open in FIRST.org Calculator">
+                    <button id="first-link-btn" class="first-redirect-btn" data-i18n-title="openFirstCalculator">
                         FIRST <svg xmlns="http://www.3w.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 2px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
                     </button>
-                    <button id="reset-btn" class="icon-btn" title="Reset score" style="margin-left: 0; transform: rotate(15deg);">↻</button>
+                    <button id="reset-btn" class="icon-btn" data-i18n-title="resetScore" style="margin-left: 0; transform: rotate(15deg);">↻</button>
                 </div>
             </div>
             <!-- Header Title Elements Removed for Compactness -->
 
 
             <div class="vector-display-container">
-                <span id="header-lock-icon" title="Read-only mode">🔒</span>
-                <button id="edit-vector-btn" class="icon-btn" title="Edit Vector String">✎</button>
-                <div class="vector-display" id="vector-string" title="Click to copy, Double click to edit">
+                <span id="header-lock-icon" data-i18n-title="readOnlyMode">🔒</span>
+                <button id="edit-vector-btn" class="icon-btn" data-i18n-title="editVectorString">✎</button>
+                <div class="vector-display" id="vector-string" data-i18n-title="vectorDisplayTitle">
                     CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N
                 </div>
                 <input type="text" id="vector-input" class="vector-edit-input" style="display: none;" />
-                <span id="copied-badge" class="copied-badge">Copied!</span>
+                <span id="copied-badge" class="copied-badge" data-i18n="copiedBadge">Copied!</span>
             </div>
         </header>
 
         <nav class="tabs">
-            <button class="tab-btn active" data-tab="cvss3">CVSS 3.1</button>
-            <button class="tab-btn" data-tab="cvss4">CVSS 4.0</button>
-            <button class="tab-btn" data-tab="cwe">CWE</button>
-            <button class="tab-btn" data-tab="about">About</button>
+            <button class="tab-btn active" data-tab="cvss3" data-i18n="tabCvss3">CVSS 3.1</button>
+            <button class="tab-btn" data-tab="cvss4" data-i18n="tabCvss4">CVSS 4.0</button>
+            <button class="tab-btn" data-tab="cwe" data-i18n="tabCwe">CWE</button>
+            <button class="tab-btn" data-tab="about" data-i18n="tabAbout">About</button>
         </nav>
 
         <main>
             <!-- CVSS 3.1 Tab Content -->
             <section id="cvss3" class="tab-content active">
                 <div class="metrics-group">
-                    <h2>Base Metrics</h2>
+                    <h2 data-i18n="groupBaseMetrics">Base Metrics</h2>
 
                     <div class="metric">
                         <strong class="metric-label">Attack Vector (AV)</strong>
@@ -126,7 +132,7 @@
             <!-- CVSS 4.0 Tab Content -->
             <section id="cvss4" class="tab-content">
                 <div class="metrics-group">
-                    <h2>Base Metrics</h2>
+                    <h2 data-i18n="groupBaseMetrics">Base Metrics</h2>
 
                     <div class="metric">
                         <strong class="metric-label">Attack Vector (AV)</strong>
@@ -172,7 +178,7 @@
                         </div>
                     </div>
 
-                    <h2 style="margin-top: 24px;">Vulnerable System Impact Metrics</h2>
+                    <h2 style="margin-top: 24px;" data-i18n="groupVulnerableSystemImpactMetrics">Vulnerable System Impact Metrics</h2>
 
                     <div class="metric">
                         <strong class="metric-label">Vuln. Confidentiality (VC)</strong>
@@ -201,7 +207,7 @@
                         </div>
                     </div>
 
-                    <h2 style="margin-top: 24px;">Subsequent System Impact Metrics</h2>
+                    <h2 style="margin-top: 24px;" data-i18n="groupSubsequentSystemImpactMetrics">Subsequent System Impact Metrics</h2>
 
                     <div class="metric">
                         <strong class="metric-label">Sub. Confidentiality (SC)</strong>
@@ -240,11 +246,11 @@
                 <div class="cwe-container">
                     <div class="cwe-search-header">
                         <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                            <h2>CWE Search</h2>
-                            <div id="cwe-metadata" class="cwe-meta">CWE Database v4.14 | Loading...</div>
+                            <h2 data-i18n="cweSearchTitle">CWE Search</h2>
+                            <div id="cwe-metadata" class="cwe-meta" data-i18n="cweMetadataLoading">CWE Database | Loading...</div>
                         </div>
                         <input type="text" id="cwe-search-input" class="cwe-search-input"
-                            placeholder="Search vulnerability (e.g. SQL Injection...)" autocomplete="off">
+                            data-i18n-placeholder="cweSearchPlaceholder" placeholder="Search vulnerability (e.g. SQL Injection...)" autocomplete="off">
                         <div class="cwe-quick-filters">
                             <span class="cwe-chip">XSS</span>
                             <span class="cwe-chip">Injection</span>
@@ -255,7 +261,7 @@
                     </div>
                     <div id="cwe-results" class="cwe-results-list">
                         <!-- Results injected here -->
-                        <div class="cwe-empty-state">Type above to search MITRE CWEs...</div>
+                        <div class="cwe-empty-state" data-i18n="cweEmptyPrompt">Type above to search MITRE CWEs...</div>
                     </div>
                 </div>
             </section>
@@ -264,29 +270,29 @@
             <section id="about" class="tab-content">
                 <div class="about-container">
                     <h2>Ned</h2>
-                    <p class="tagline">"I'm the guy in the chair."</p>
-                    <img src="images/guy-in-chair.webp" alt="Ned, the guy in the chair" class="about-image">
+                    <p class="tagline" data-i18n="aboutTagline">"I'm the guy in the chair."</p>
+                    <img src="images/guy-in-chair.webp" data-i18n-alt="aboutImageAlt" alt="Ned, the guy in the chair" class="about-image">
                     <div class="info-card">
-                        <p><strong>Offline & Private:</strong> Embedded FIRST.org and Red Hat JavaScript calculation
+                        <p><strong data-i18n="offlinePrivateStrong">Offline & Private:</strong> <span data-i18n="offlinePrivateDescription">Embedded FIRST.org and Red Hat JavaScript calculation
                             mechanics guarantee your assessments remain securely on your local device. Zero external
-                            data collection.</p>
+                            data collection.</span></p>
                         <div class="legal-disclaimer">
-                            <strong>Acknowledgements:</strong><br>
-                            • CVSS v3.1: Copyright (c) 2019, FIRST.ORG, INC. (BSD-2-Clause)<br>
-                            • CVSS v4.0: Copyright FIRST, Red Hat, contributors. (SPDX: BSD-2-Clause)<br>
-                            • Fuse.js: Copyright (c) 2024 Kiro Risk (Apache-2.0)
+                            <strong data-i18n="acknowledgementsTitle">Acknowledgements:</strong><br>
+                            <span data-i18n="acknowledgementsLine1">CVSS v3.1: Copyright (c) 2019, FIRST.ORG, INC. (BSD-2-Clause)</span><br>
+                            <span data-i18n="acknowledgementsLine2">CVSS v4.0: Copyright FIRST, Red Hat, contributors. (SPDX: BSD-2-Clause)</span><br>
+                            <span data-i18n="acknowledgementsLine3">Fuse.js: Copyright (c) 2024 Kiro Risk (Apache-2.0)</span>
                         </div>
                     </div>
 
                     <div class="social-links">
                         <a href="https://github.com/br0wnboi/ned-cvss-calculator" target="_blank" class="social-btn">
-                            <span class="social-icon">{'</>'}</span> Source Code
+                            <span class="social-icon">{'</>'}</span> <span data-i18n="sourceCodeLink">Source Code</span>
                         </a>
                         <a href="https://github.com/br0wnboi" target="_blank" class="social-btn">
                             <span class="social-icon">🐙</span> GitHub
                         </a>
                         <a href="https://x.com/br0wnboi" target="_blank" class="social-btn">
-                            <span class="social-icon">𝕏</span> Profile
+                            <span class="social-icon">𝕏</span> <span data-i18n="profileLink">Profile</span>
                         </a>
                         <!-- Placeholder for Support: Uncomment when ready -->
                         <!-- <a href="your-kofi-link" target="_blank" class="social-btn kofi-btn">
@@ -295,10 +301,10 @@
                 </div>
 
                 <div class="credits">
-                        <p>Made by <strong>br0wnboi</strong> • <a href="privacy.html" target="_blank"
-                                class="privacy-link">Privacy Policy</a> <span style="opacity: 0.5;">•</span> 
-                            <a href="#" id="clear-data-btn" class="privacy-link" style="color: #fca5a5;" title="Clear Local Storage">
-                                Clear Data
+                        <p><span data-i18n="madeByLabel">Made by</span> <strong>br0wnboi</strong> • <a href="privacy.html" target="_blank"
+                                class="privacy-link" data-i18n="privacyPolicy">Privacy Policy</a> <span style="opacity: 0.5;">•</span> 
+                            <a href="#" id="clear-data-btn" class="privacy-link" style="color: #fca5a5;" data-i18n-title="clearLocalStorage">
+                                <span data-i18n="clearData">Clear Data</span>
                             </a>
                         </p>
                     </div>
@@ -312,6 +318,7 @@
     <script src="lib/cvsscalc40.js"></script>
     <script src="lib/cvsscalc40_helptext.js"></script>
     <script src="lib/fuse.min.js"></script>
+    <script src="lib/localization.js"></script>
     <script src="popup.js"></script>
 
     <!-- Custom Toast Notification -->

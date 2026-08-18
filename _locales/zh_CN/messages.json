@@ -60,10 +60,10 @@
     "message": "基础指标"
   },
   "groupVulnerableSystemImpactMetrics": {
-    "message": "易受攻击系统影响指标"
+    "message": "目标系统影响指标"
   },
   "groupSubsequentSystemImpactMetrics": {
-    "message": "后续系统影响指标"
+    "message": "损害会传播到链路上的其他系统指标"
   },
   "cweSearchTitle": {
     "message": "CWE 检索"
@@ -240,37 +240,37 @@
     "message": "可用性 (A)"
   },
   "metric_4_AV": {
-    "message": "攻击向量 (AV)"
+    "message": "攻击途径（AV）"
   },
   "metric_4_AC": {
-    "message": "攻击复杂度 (AC)"
+    "message": "攻击复杂度（AC）"
   },
   "metric_4_AT": {
-    "message": "攻击前提 (AT)"
+    "message": "攻击前提要求（AT）"
   },
   "metric_4_PR": {
-    "message": "所需权限 (PR)"
+    "message": "所需权限（PR）"
   },
   "metric_4_UI": {
-    "message": "用户交互 (UI)"
+    "message": "用户交互（UI）"
   },
   "metric_4_VC": {
-    "message": "易受攻击系统机密性 (VC)"
+    "message": "机密性影响（VC）"
   },
   "metric_4_VI": {
-    "message": "易受攻击系统完整性 (VI)"
+    "message": "完整性影响（VI）"
   },
   "metric_4_VA": {
-    "message": "易受攻击系统可用性 (VA)"
+    "message": "可用性影响（VA）"
   },
   "metric_4_SC": {
-    "message": "后续系统机密性 (SC)"
+    "message": "机密性影响（SC）"
   },
   "metric_4_SI": {
-    "message": "后续系统完整性 (SI)"
+    "message": "完整性影响（SI）"
   },
   "metric_4_SA": {
-    "message": "后续系统可用性 (SA)"
+    "message": "可用性影响（SA）"
   },
   "option_3_AV_N": {
     "message": "网络"

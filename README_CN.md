@@ -8,6 +8,7 @@ Ned 是一个本地运行的浏览器扩展，用于直接在弹窗中计算 Com
 
 - **支持 CVSS v3.1 与 v4.0**：使用标准指标计算两个版本的分数。
 - **中英文切换**：在弹窗与隐私页之间切换英文和简体中文界面。
+- **支持常驻侧栏**：可在 Chrome、Edge 与 Firefox 的浏览器侧栏中打开 Ned，便于长时间对照评分。
 - **离线 MITRE CWE 检索**：通过内置的离线模糊搜索页快速定位弱点条目，并支持悬浮查看描述。
 - **隐私优先（完全离线）**：所有计算与检索都在浏览器本地完成，不会调用外部 API。
 - **复制向量字符串 / CWE ID**：单击即可复制向量字符串或 CWE 编号。
@@ -33,17 +34,25 @@ Ned 是一个本地运行的浏览器扩展，用于直接在弹窗中计算 Com
 
 ### 手动安装（开发模式）
 
+先生成浏览器专用构建：
+
+```bash
+python3 scripts/build_variants.py
+```
+
 #### Chromium（Chrome、Brave、Edge 等）
 1. 克隆或下载本仓库。
 2. 打开基于 Chromium 的浏览器，进入 `chrome://extensions/`（Microsoft Edge 使用 `edge://extensions/`）。
 3. 打开右上角的 **Developer mode**。
-4. 点击 **Load unpacked**，选择本扩展代码所在目录。
+4. 点击 **Load unpacked**，选择 `dev/chromium` 目录。
+5. 打开扩展弹窗并点击 **侧栏**，即可切换到浏览器侧栏。Chrome 与 Edge 可在浏览器侧栏设置中选择显示在左侧或右侧。
 
 #### Firefox
 1. 克隆或下载本仓库。
 2. 打开 Firefox，进入 `about:debugging`。
 3. 在侧边栏点击 **This Firefox**。
-4. 点击 **Load Temporary Add-on...**，选择下载目录中的 `manifest.json` 文件。
+4. 点击 **Load Temporary Add-on...**，选择 `dev/firefox/manifest.json`。
+5. 打开扩展弹窗并点击 **侧栏**，即可切换到 Firefox 内置侧栏。
 
 ## 鸣谢
 

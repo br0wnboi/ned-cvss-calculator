@@ -23,6 +23,12 @@
   "openFirstCalculator": {
     "message": "在 FIRST.org 计算器中打开"
   },
+  "openSidebar": {
+    "message": "侧栏"
+  },
+  "openSidebarTitle": {
+    "message": "打开浏览器常驻侧栏"
+  },
   "resetScore": {
     "message": "重置分数"
   },
@@ -124,6 +130,12 @@
   },
   "cannotEditInvalidVector": {
     "message": "无法编辑无效的向量字符串"
+  },
+  "sidebarUnsupported": {
+    "message": "当前浏览器版本不支持侧栏"
+  },
+  "sidebarOpenFailed": {
+    "message": "无法从当前窗口打开浏览器侧栏"
   },
   "errorParsingVector": {
     "message": "向量字符串解析失败，请确认格式正确。"

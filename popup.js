@@ -1,5 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const i18n = window.NedI18n;
+    const extensionApi = typeof browser !== 'undefined' ? browser : chrome;
+    const surfaceMode = new URLSearchParams(window.location.search).get('surface') === 'sidebar'
+        ? 'sidebar'
+        : 'popup';
+    document.body.dataset.surface = surfaceMode;
     await i18n.init();
 
     const t = (key, substitutions) => i18n.t(key, substitutions);
@@ -11,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const vectorInput = document.getElementById('vector-input');
     const editVectorBtn = document.getElementById('edit-vector-btn');
     const firstLinkBtn = document.getElementById('first-link-btn');
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
     const copiedBadge = document.getElementById('copied-badge');
     const toast = document.getElementById('toast');
     const scoreDisplay = document.getElementById('final-score');
@@ -25,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     i18n.translateDocument();
 
     if (appVersionDisplay) {
-        const manifest = chrome.runtime.getManifest();
+        const manifest = extensionApi.runtime.getManifest();
         appVersionDisplay.textContent = `v${manifest.version}`;
     }
 
@@ -178,6 +184,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(() => {
             toast.classList.remove('show');
         }, 3000);
+    }
+
+    function closePopupWindow() {
+        if (surfaceMode === 'popup') {
+            window.close();
+        }
+    }
+
+    function handleSidebarOpenFailure(error) {
+        console.error('Unable to open sidebar:', error);
+        showToast(t('sidebarOpenFailed'));
+    }
+
+    function openSidebar() {
+        if (surfaceMode === 'sidebar') {
+            return;
+        }
+
+        if (typeof browser !== 'undefined' && browser.sidebarAction?.open) {
+            try {
+                Promise.resolve(browser.sidebarAction.open())
+                    .then(closePopupWindow)
+                    .catch(handleSidebarOpenFailure);
+            } catch (error) {
+                handleSidebarOpenFailure(error);
+            }
+            return;
+        }
+
+        if (chrome.sidePanel?.open && typeof chrome.windows?.WINDOW_ID_CURRENT === 'number') {
+            try {
+                Promise.resolve(chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT }))
+                    .then(closePopupWindow)
+                    .catch(handleSidebarOpenFailure);
+            } catch (error) {
+                handleSidebarOpenFailure(error);
+            }
+            return;
+        }
+
+        showToast(t('sidebarUnsupported'));
+    }
+
+    if (sidebarToggleBtn) {
+        sidebarToggleBtn.addEventListener('click', openSidebar);
     }
 
     // Setup copy to clipboard vs edit (differentiate single and double clicks)

@@ -8,6 +8,7 @@ Ned is a locally-run, browser extension for calculating Common Vulnerability Sco
 
 - **CVSS v3.1 & v4.0 Support**: Calculate scores using standard metrics for both versions.
 - **English / Chinese Toggle**: Switch the popup and privacy page between English and Simplified Chinese.
+- **Persistent Sidebar Support**: Open Ned in the browser sidebar on Chrome, Edge, and Firefox for longer scoring sessions.
 - **MITRE CWE Offline Search**: Quickly map vulnerabilities using the built-in, offline fuzzy search tab (includes hover descriptions for weaknesses).
 - **Privacy-First (Offline)**: All calculations and searches run locally in your browser. No external API calls are made.
 - **Copy Vector Strings / IDs**: A single click instantly copies a vector string or a CWE ID to your clipboard.
@@ -33,17 +34,25 @@ The easiest way to install Ned is to download it directly from your browser's of
 
 ### Manual Installation (Development)
 
+Run the browser-specific build first:
+
+```bash
+python3 scripts/build_variants.py
+```
+
 #### Chromium (Chrome, Brave, Edge, etc.)
 1. Clone or download this repository.
 2. Open your chromium-based browser and navigate to `chrome://extensions/` (or `edge://extensions/` for Microsoft Edge).
 3. Enable **Developer mode** in the top right corner.
-4. Click **Load unpacked** and select the folder containing this extension's code.
+4. Click **Load unpacked** and select the `dev/chromium` folder.
+5. Open the popup and click **Sidebar** to move Ned into the browser side panel. Chrome and Edge let users choose the left or right side from the browser side panel settings.
 
 #### Firefox
 1. Clone or download this repository.
 2. Open Firefox and navigate to `about:debugging`.
 3. Click on **This Firefox** in the sidebar.
-4. Click **Load Temporary Add-on...** and select the `manifest.json` file from the downloaded folder.
+4. Click **Load Temporary Add-on...** and select `dev/firefox/manifest.json`.
+5. Open the popup and click **Sidebar** to pin Ned into Firefox's built-in sidebar.
 
 ## Credits & Acknowledgements
 

@@ -23,6 +23,12 @@
   "openFirstCalculator": {
     "message": "Open in FIRST.org Calculator"
   },
+  "openSidebar": {
+    "message": "Sidebar"
+  },
+  "openSidebarTitle": {
+    "message": "Open the persistent browser sidebar"
+  },
   "resetScore": {
     "message": "Reset score"
   },
@@ -124,6 +130,12 @@
   },
   "cannotEditInvalidVector": {
     "message": "Cannot edit an invalid vector string"
+  },
+  "sidebarUnsupported": {
+    "message": "Sidebar is not supported in this browser version"
+  },
+  "sidebarOpenFailed": {
+    "message": "Unable to open the browser sidebar from this window"
   },
   "errorParsingVector": {
     "message": "Error parsing vector string. Ensure the format is correct."

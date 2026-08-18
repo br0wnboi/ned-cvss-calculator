@@ -331,6 +331,19 @@
             <button id="translation-modal-ack" class="ack-btn">I understand</button>
         </div>
     </div>
+
+    <!-- ML Model Download Disclaimer Modal -->
+    <div id="ml-download-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3 style="color: var(--accent-color);">Download AI Model?</h3>
+            <p>Semantic search requires downloading a lightweight ML model (<strong>Snowflake Arctic Embed XS, ~22MB</strong>) from Hugging Face.</p>
+            <p>This download happens <strong>once</strong>. Afterwards, all AI searches run <strong>100% offline</strong> directly in your browser.</p>
+            <div class="modal-actions" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                <button id="ml-modal-cancel" class="ack-btn" style="background: #374151;">Cancel</button>
+                <button id="ml-modal-confirm" class="ack-btn">Download & Continue</button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

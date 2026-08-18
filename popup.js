@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentTab = 'cvss3';
     let justTranslated = false;
     let hasSeenTranslationWarning = false;
+    let hasSeenMLDownloadWarning = false;
 
     // Default fresh states
     const defaultStates = {
@@ -37,14 +38,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let state = JSON.parse(JSON.stringify(defaultStates));
 
     function saveState() {
-        chrome.storage.local.set({ cvssState: state, activeTab: currentTab, hasSeenTranslationWarning });
+        chrome.storage.local.set({ cvssState: state, activeTab: currentTab, hasSeenTranslationWarning, hasSeenMLDownloadWarning });
     }
 
     let recentCWEs = []; // Global history array
     let recentQueries = []; // User's previous text searches
 
     function loadState(callback) {
-        chrome.storage.local.get(['cvssState', 'activeTab', 'recentCWEs', 'recentQueries', 'hasSeenTranslationWarning'], (result) => {
+        chrome.storage.local.get(['cvssState', 'activeTab', 'recentCWEs', 'recentQueries', 'hasSeenTranslationWarning', 'hasSeenMLDownloadWarning'], (result) => {
             if (result.cvssState) {
                 state = result.cvssState;
             }
@@ -59,6 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (result.hasSeenTranslationWarning) {
                 hasSeenTranslationWarning = result.hasSeenTranslationWarning;
+            }
+            if (result.hasSeenMLDownloadWarning) {
+                hasSeenMLDownloadWarning = result.hasSeenMLDownloadWarning;
             }
             if (callback) callback();
         });
@@ -669,6 +673,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const semanticBtn = document.getElementById('semantic-test-btn');
     const semanticStatus = document.getElementById('semantic-status');
+    const mlModal = document.getElementById('ml-download-modal');
+    const mlConfirm = document.getElementById('ml-modal-confirm');
+    const mlCancel = document.getElementById('ml-modal-cancel');
+
+    function executeSemanticSearch(query) {
+        if (!semanticStatus || !resultsContainer) return;
+        semanticStatus.style.display = 'block';
+        semanticStatus.textContent = 'Initializing AI...';
+        resultsContainer.textContent = ''; 
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'cwe-empty-state';
+        loadingDiv.textContent = 'Running semantic match...';
+        resultsContainer.appendChild(loadingDiv);
+
+        chrome.runtime.sendMessage({ target: 'offscreen', action: 'SEMANTIC_SEARCH', query }, (response) => {
+            if (chrome.runtime.lastError) {
+                console.error("Messaging Error:", chrome.runtime.lastError);
+                semanticStatus.textContent = 'Error: ' + chrome.runtime.lastError.message;
+                resultsContainer.textContent = ''; 
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'cwe-empty-state';
+                errorDiv.textContent = 'Failed to connect to ML worker.';
+                resultsContainer.appendChild(errorDiv);
+                return;
+            }
+            
+            if (response && response.success) {
+                saveRecentQuery(query);
+                semanticStatus.style.display = 'none';
+                resultsContainer.textContent = '';
+                const mappedResults = response.results.map(r => {
+                    const actualCwe = cweData.find(c => c.id === r.id) || { id: r.id, name: r.name };
+                    return {
+                        item: {
+                            ...actualCwe,
+                            name: `${actualCwe.name} [Match: ${(r.score * 100).toFixed(1)}%]`
+                        }
+                    };
+                });
+                renderCWEResults(mappedResults);
+            } else {
+                semanticStatus.textContent = 'Search failed: ' + (response?.error || 'Unknown error');
+            }
+        });
+    }
 
     if (semanticBtn) {
         semanticBtn.addEventListener('click', () => {
@@ -678,44 +727,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            semanticStatus.style.display = 'block';
-            semanticStatus.textContent = 'Initializing AI...';
-            resultsContainer.textContent = ''; 
-            const loadingDiv = document.createElement('div');
-            loadingDiv.className = 'cwe-empty-state';
-            loadingDiv.textContent = 'Running semantic match...';
-            resultsContainer.appendChild(loadingDiv);
+            if (!hasSeenMLDownloadWarning) {
+                mlModal?.classList.remove('hidden');
+            } else {
+                executeSemanticSearch(query);
+            }
+        });
+    }
 
-            chrome.runtime.sendMessage({ target: 'offscreen', action: 'SEMANTIC_SEARCH', query }, (response) => {
-                if (chrome.runtime.lastError) {
-                    console.error("Messaging Error:", chrome.runtime.lastError);
-                    semanticStatus.textContent = 'Error: ' + chrome.runtime.lastError.message;
-                    resultsContainer.textContent = ''; 
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'cwe-empty-state';
-                    errorDiv.textContent = 'Failed to connect to ML worker.';
-                    resultsContainer.appendChild(errorDiv);
-                    return;
-                }
-                
-                if (response && response.success) {
-                    saveRecentQuery(query);
-                    semanticStatus.style.display = 'none';
-                    resultsContainer.textContent = '';
-                    const mappedResults = response.results.map(r => {
-                        const actualCwe = cweData.find(c => c.id === r.id) || { id: r.id, name: r.name };
-                        return {
-                            item: {
-                                ...actualCwe,
-                                name: `${actualCwe.name} [Match: ${(r.score * 100).toFixed(1)}%]`
-                            }
-                        };
-                    });
-                    renderCWEResults(mappedResults);
-                } else {
-                    semanticStatus.textContent = 'Search failed: ' + (response?.error || 'Unknown error');
-                }
-            });
+    if (mlConfirm) {
+        mlConfirm.addEventListener('click', () => {
+            mlModal?.classList.add('hidden');
+            hasSeenMLDownloadWarning = true;
+            saveState();
+            const query = searchInput?.value.trim();
+            if (query) {
+                executeSemanticSearch(query);
+            }
+        });
+    }
+
+    if (mlCancel) {
+        mlCancel.addEventListener('click', () => {
+            mlModal?.classList.add('hidden');
         });
     }
 

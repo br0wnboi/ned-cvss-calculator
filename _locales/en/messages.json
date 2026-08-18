@@ -1,0 +1,482 @@
+{
+  "extensionName": {
+    "message": "Ned - CVSS Calculator"
+  },
+  "extensionDescription": {
+    "message": "Calculate CVSS 3.1 and 4.0 scores offline, with a built-in MITRE CWE database for fuzzy searching."
+  },
+  "actionTitle": {
+    "message": "Open Ned - CVSS Calculator"
+  },
+  "documentTitle": {
+    "message": "Ned - CVSS Calculator"
+  },
+  "appSubtitle": {
+    "message": "CVSS Calculator"
+  },
+  "switchLanguage": {
+    "message": "Switch language"
+  },
+  "copiedBadge": {
+    "message": "Copied!"
+  },
+  "openFirstCalculator": {
+    "message": "Open in FIRST.org Calculator"
+  },
+  "openSidebar": {
+    "message": "Sidebar"
+  },
+  "openSidebarTitle": {
+    "message": "Open the persistent browser sidebar"
+  },
+  "resetScore": {
+    "message": "Reset score"
+  },
+  "readOnlyMode": {
+    "message": "Read-only mode"
+  },
+  "editVectorString": {
+    "message": "Edit Vector String"
+  },
+  "saveVectorString": {
+    "message": "Save Vector String"
+  },
+  "vectorDisplayTitle": {
+    "message": "Click to copy, double click to edit"
+  },
+  "tabCvss3": {
+    "message": "CVSS 3.1"
+  },
+  "tabCvss4": {
+    "message": "CVSS 4.0"
+  },
+  "tabCwe": {
+    "message": "CWE"
+  },
+  "tabAbout": {
+    "message": "About"
+  },
+  "groupBaseMetrics": {
+    "message": "Base Metrics"
+  },
+  "groupVulnerableSystemImpactMetrics": {
+    "message": "Vulnerable System Impact Metrics"
+  },
+  "groupSubsequentSystemImpactMetrics": {
+    "message": "Subsequent System Impact Metrics"
+  },
+  "cweSearchTitle": {
+    "message": "CWE Search"
+  },
+  "cweSearchPlaceholder": {
+    "message": "Search vulnerability (e.g. SQL Injection...)"
+  },
+  "cweEmptyPrompt": {
+    "message": "Type above to search MITRE CWEs..."
+  },
+  "aboutTagline": {
+    "message": "\"I'm the guy in the chair.\""
+  },
+  "aboutImageAlt": {
+    "message": "Ned, the guy in the chair"
+  },
+  "offlinePrivateStrong": {
+    "message": "Offline & Private:"
+  },
+  "offlinePrivateDescription": {
+    "message": "Embedded FIRST.org and Red Hat JavaScript calculation mechanics keep your assessments on your local device. No external data collection."
+  },
+  "acknowledgementsTitle": {
+    "message": "Acknowledgements:"
+  },
+  "acknowledgementsLine1": {
+    "message": "CVSS v3.1: Copyright (c) 2019, FIRST.ORG, INC. (BSD-2-Clause)"
+  },
+  "acknowledgementsLine2": {
+    "message": "CVSS v4.0: Copyright FIRST, Red Hat, contributors. (SPDX: BSD-2-Clause)"
+  },
+  "acknowledgementsLine3": {
+    "message": "Fuse.js: Copyright (c) 2024 Kiro Risk (Apache-2.0)"
+  },
+  "sourceCodeLink": {
+    "message": "Source Code"
+  },
+  "profileLink": {
+    "message": "Profile"
+  },
+  "madeByLabel": {
+    "message": "Made by"
+  },
+  "privacyPolicy": {
+    "message": "Privacy Policy"
+  },
+  "clearData": {
+    "message": "Clear Data"
+  },
+  "clearLocalStorage": {
+    "message": "Clear local storage"
+  },
+  "clearDataConfirm": {
+    "message": "Are you sure you want to clear all extension data? This will reset all CVSS scores and remove your recently copied CWE history."
+  },
+  "clearDataSuccess": {
+    "message": "Data cleared successfully. The extension will now refresh."
+  },
+  "cannotOpenInvalidVector": {
+    "message": "Cannot open an invalid vector string"
+  },
+  "cannotCopyInvalidVector": {
+    "message": "Cannot copy an invalid vector string"
+  },
+  "cannotEditInvalidVector": {
+    "message": "Cannot edit an invalid vector string"
+  },
+  "sidebarUnsupported": {
+    "message": "Sidebar is not supported in this browser version"
+  },
+  "sidebarRequiresChrome116": {
+    "message": "This Chrome version cannot open the sidebar from the popup. Update to Chrome 116+."
+  },
+  "sidebarOpenFailed": {
+    "message": "Unable to open the browser sidebar from this window"
+  },
+  "errorParsingVector": {
+    "message": "Error parsing vector string. Ensure the format is correct."
+  },
+  "invalidVectorPrefix": {
+    "message": "Invalid vector string prefix. Must start with CVSS:3.1/ or CVSS:4.0/"
+  },
+  "severityNone": {
+    "message": "None"
+  },
+  "severityLow": {
+    "message": "Low"
+  },
+  "severityMedium": {
+    "message": "Medium"
+  },
+  "severityHigh": {
+    "message": "High"
+  },
+  "severityCritical": {
+    "message": "Critical"
+  },
+  "severityUnavailable": {
+    "message": "N/A"
+  },
+  "severityUnknown": {
+    "message": "Unknown"
+  },
+  "errorShort": {
+    "message": "Error"
+  },
+  "invalidMetrics": {
+    "message": "Invalid metrics"
+  },
+  "errorCvss3Missing": {
+    "message": "Error: CVSS 3.1 library missing"
+  },
+  "errorCvss4Missing": {
+    "message": "Error: CVSS 4.0 library missing"
+  },
+  "cweMetadataLoading": {
+    "message": "CWE Database | Loading..."
+  },
+  "cweMetadataLoaded": {
+    "message": "CWE Database v$1 | $2 Weaknesses"
+  },
+  "failedLoadOfflineDictionary": {
+    "message": "Failed to load the offline dictionary. Please rebuild the data."
+  },
+  "recentlyCopied": {
+    "message": "Recently Copied"
+  },
+  "clearAction": {
+    "message": "Clear"
+  },
+  "noMatchingVulnerabilities": {
+    "message": "No matching vulnerabilities found."
+  },
+  "noDescriptionAvailable": {
+    "message": "No description available"
+  },
+  "copyCweTitle": {
+    "message": "Click to copy $1"
+  },
+  "openCweTitle": {
+    "message": "Open $1 on cwe.mitre.org"
+  },
+  "moreInfo": {
+    "message": "More Info"
+  },
+  "alternateTerms": {
+    "message": "Alternate Terms:"
+  },
+  "copiedCwe": {
+    "message": "Copied $1"
+  },
+  "metric_3_AV": {
+    "message": "Attack Vector (AV)"
+  },
+  "metric_3_AC": {
+    "message": "Attack Complexity (AC)"
+  },
+  "metric_3_PR": {
+    "message": "Privileges Required (PR)"
+  },
+  "metric_3_UI": {
+    "message": "User Interaction (UI)"
+  },
+  "metric_3_S": {
+    "message": "Scope (S)"
+  },
+  "metric_3_C": {
+    "message": "Confidentiality (C)"
+  },
+  "metric_3_I": {
+    "message": "Integrity (I)"
+  },
+  "metric_3_A": {
+    "message": "Availability (A)"
+  },
+  "metric_4_AV": {
+    "message": "Attack Vector (AV)"
+  },
+  "metric_4_AC": {
+    "message": "Attack Complexity (AC)"
+  },
+  "metric_4_AT": {
+    "message": "Attack Requirements (AT)"
+  },
+  "metric_4_PR": {
+    "message": "Privileges Required (PR)"
+  },
+  "metric_4_UI": {
+    "message": "User Interaction (UI)"
+  },
+  "metric_4_VC": {
+    "message": "Vuln. Confidentiality (VC)"
+  },
+  "metric_4_VI": {
+    "message": "Vuln. Integrity (VI)"
+  },
+  "metric_4_VA": {
+    "message": "Vuln. Availability (VA)"
+  },
+  "metric_4_SC": {
+    "message": "Sub. Confidentiality (SC)"
+  },
+  "metric_4_SI": {
+    "message": "Sub. Integrity (SI)"
+  },
+  "metric_4_SA": {
+    "message": "Sub. Availability (SA)"
+  },
+  "option_3_AV_N": {
+    "message": "Network"
+  },
+  "option_3_AV_A": {
+    "message": "Adjacent"
+  },
+  "option_3_AV_L": {
+    "message": "Local"
+  },
+  "option_3_AV_P": {
+    "message": "Physical"
+  },
+  "option_3_AC_L": {
+    "message": "Low"
+  },
+  "option_3_AC_H": {
+    "message": "High"
+  },
+  "option_3_PR_N": {
+    "message": "None"
+  },
+  "option_3_PR_L": {
+    "message": "Low"
+  },
+  "option_3_PR_H": {
+    "message": "High"
+  },
+  "option_3_UI_N": {
+    "message": "None"
+  },
+  "option_3_UI_R": {
+    "message": "Required"
+  },
+  "option_3_S_U": {
+    "message": "Unchanged"
+  },
+  "option_3_S_C": {
+    "message": "Changed"
+  },
+  "option_3_C_N": {
+    "message": "None"
+  },
+  "option_3_C_L": {
+    "message": "Low"
+  },
+  "option_3_C_H": {
+    "message": "High"
+  },
+  "option_3_I_N": {
+    "message": "None"
+  },
+  "option_3_I_L": {
+    "message": "Low"
+  },
+  "option_3_I_H": {
+    "message": "High"
+  },
+  "option_3_A_N": {
+    "message": "None"
+  },
+  "option_3_A_L": {
+    "message": "Low"
+  },
+  "option_3_A_H": {
+    "message": "High"
+  },
+  "option_4_AV_N": {
+    "message": "Network"
+  },
+  "option_4_AV_A": {
+    "message": "Adjacent"
+  },
+  "option_4_AV_L": {
+    "message": "Local"
+  },
+  "option_4_AV_P": {
+    "message": "Physical"
+  },
+  "option_4_AC_L": {
+    "message": "Low"
+  },
+  "option_4_AC_H": {
+    "message": "High"
+  },
+  "option_4_AT_N": {
+    "message": "None"
+  },
+  "option_4_AT_P": {
+    "message": "Present"
+  },
+  "option_4_PR_N": {
+    "message": "None"
+  },
+  "option_4_PR_L": {
+    "message": "Low"
+  },
+  "option_4_PR_H": {
+    "message": "High"
+  },
+  "option_4_UI_N": {
+    "message": "None"
+  },
+  "option_4_UI_P": {
+    "message": "Passive"
+  },
+  "option_4_UI_A": {
+    "message": "Active"
+  },
+  "option_4_VC_H": {
+    "message": "High"
+  },
+  "option_4_VC_L": {
+    "message": "Low"
+  },
+  "option_4_VC_N": {
+    "message": "None"
+  },
+  "option_4_VI_H": {
+    "message": "High"
+  },
+  "option_4_VI_L": {
+    "message": "Low"
+  },
+  "option_4_VI_N": {
+    "message": "None"
+  },
+  "option_4_VA_H": {
+    "message": "High"
+  },
+  "option_4_VA_L": {
+    "message": "Low"
+  },
+  "option_4_VA_N": {
+    "message": "None"
+  },
+  "option_4_SC_H": {
+    "message": "High"
+  },
+  "option_4_SC_L": {
+    "message": "Low"
+  },
+  "option_4_SC_N": {
+    "message": "None"
+  },
+  "option_4_SI_S": {
+    "message": "Safety"
+  },
+  "option_4_SI_H": {
+    "message": "High"
+  },
+  "option_4_SI_L": {
+    "message": "Low"
+  },
+  "option_4_SI_N": {
+    "message": "None"
+  },
+  "option_4_SA_S": {
+    "message": "Safety"
+  },
+  "option_4_SA_H": {
+    "message": "High"
+  },
+  "option_4_SA_L": {
+    "message": "Low"
+  },
+  "option_4_SA_N": {
+    "message": "None"
+  },
+  "privacyDocumentTitle": {
+    "message": "Privacy Policy - Ned CVSS Calculator"
+  },
+  "privacyTitle": {
+    "message": "Privacy Policy"
+  },
+  "effectiveDateLabel": {
+    "message": "Effective Date:"
+  },
+  "effectiveDateValue": {
+    "message": "August 17, 2026"
+  },
+  "privacyOverviewHeading": {
+    "message": "Overview"
+  },
+  "privacyOverviewBody": {
+    "message": "Ned is a fully offline, client-side browser extension designed for privacy and speed."
+  },
+  "privacyDataCollectionHeading": {
+    "message": "Data Collection"
+  },
+  "privacyDataCollectionBody": {
+    "message": "This extension collects zero personal data, telemetry, or analytics. It does not call external APIs. All CVSS calculations run locally in your browser through embedded JavaScript libraries."
+  },
+  "privacyPermissionsHeading": {
+    "message": "Permissions"
+  },
+  "privacyPermissionsBody": {
+    "message": "The extension uses minimal permissions, including local storage and clipboard copy support when you choose to copy a vector string or CWE ID. It does not track browsing history or read web page content."
+  },
+  "privacyOpenSourceHeading": {
+    "message": "Open Source"
+  },
+  "privacyOpenSourcePrefix": {
+    "message": "You can verify this in the"
+  },
+  "privacyGithubLinkText": {
+    "message": "open-source repository on GitHub"
+  }
+}

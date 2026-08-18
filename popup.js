@@ -1,19 +1,87 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    const i18n = window.NedI18n;
+    const extensionApi = typeof browser !== 'undefined' ? browser : chrome;
+    const surfaceMode = new URLSearchParams(window.location.search).get('surface') === 'sidebar'
+        ? 'sidebar'
+        : 'popup';
+    document.body.dataset.surface = surfaceMode;
+    await i18n.init();
+
+    const t = (key, substitutions) => i18n.t(key, substitutions);
     const tabs = document.querySelectorAll('.tab-btn');
     const sections = document.querySelectorAll('.tab-content');
+    const headerEl = document.querySelector('header');
+    const languageButtons = document.querySelectorAll('.lang-btn');
     const vectorDisplay = document.getElementById('vector-string');
+    const vectorInput = document.getElementById('vector-input');
+    const editVectorBtn = document.getElementById('edit-vector-btn');
+    const firstLinkBtn = document.getElementById('first-link-btn');
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+    const copiedBadge = document.getElementById('copied-badge');
+    const toast = document.getElementById('toast');
     const scoreDisplay = document.getElementById('final-score');
     const severityDisplay = document.getElementById('final-severity');
     const emojiDisplay = document.getElementById('final-emoji');
     const resetBtn = document.getElementById('reset-btn');
     const appVersionDisplay = document.getElementById('app-version');
+    const saveIconHTML = `<svg xmlns="http://www.3w.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-save"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`;
+    const editIconHTML = '✎';
+
+    document.title = t('documentTitle');
+    i18n.translateDocument();
 
     if (appVersionDisplay) {
-        const manifest = chrome.runtime.getManifest();
+        const manifest = extensionApi.runtime.getManifest();
         appVersionDisplay.textContent = `v${manifest.version}`;
     }
 
     let currentTab = 'cvss3';
+
+    function updateLanguageButtons() {
+        languageButtons.forEach(button => {
+            button.classList.toggle('active', button.dataset.lang === i18n.getCurrentLanguage());
+        });
+    }
+
+    function updateReadonlyState() {
+        if (currentTab === 'cwe' || currentTab === 'about') {
+            headerEl.classList.add('readonly-mode');
+        } else {
+            headerEl.classList.remove('readonly-mode');
+        }
+    }
+
+    function setEditButtonMode(mode) {
+        if (mode === 'save') {
+            const parser = new DOMParser();
+            const svgDoc = parser.parseFromString(saveIconHTML, 'image/svg+xml');
+            editVectorBtn.replaceChildren(svgDoc.documentElement);
+            editVectorBtn.title = t('saveVectorString');
+            return;
+        }
+
+        editVectorBtn.textContent = editIconHTML;
+        editVectorBtn.title = t('editVectorString');
+    }
+
+    function isVectorInvalid() {
+        return vectorDisplay.dataset.isInvalid === 'true';
+    }
+
+    function getMetricLabelKey(metricGroup) {
+        return `metric_${metricGroup}`;
+    }
+
+    function getMetricOptionKey(metricGroup, optionValue) {
+        return `option_${metricGroup}_${optionValue}`;
+    }
+
+    function refreshStaticText() {
+        document.title = t('documentTitle');
+        i18n.translateDocument();
+        updateLanguageButtons();
+        setEditButtonMode(vectorInput.style.display === 'block' ? 'save' : 'edit');
+    }
 
     // Default fresh states
     const defaultStates = {
@@ -89,30 +157,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             updateUISelections(); // ensure active tab shows correct selections if coming back
             updateCalculations();
-
-            const headerEl = document.querySelector('header');
-
-            if (currentTab === 'cwe' || currentTab === 'about') {
-                headerEl.classList.add('readonly-mode');
-            } else {
-                headerEl.classList.remove('readonly-mode');
-            }
+            updateReadonlyState();
 
             saveState();
         });
     });
 
-    const vectorInput = document.getElementById('vector-input');
-    const editVectorBtn = document.getElementById('edit-vector-btn');
-    const firstLinkBtn = document.getElementById('first-link-btn');
-    const copiedBadge = document.getElementById('copied-badge');
-    const toast = document.getElementById('toast');
-
     if (firstLinkBtn) {
         firstLinkBtn.addEventListener('click', () => {
             const rawText = vectorDisplay.dataset.rawVector || vectorDisplay.textContent.trim();
-            if (rawText === 'Invalid metrics' || rawText.includes('Error') || rawText === '--') {
-                showToast("Cannot open an invalid vector string");
+            if (isVectorInvalid()) {
+                showToast(t('cannotOpenInvalidVector'));
                 return;
             }
             if (currentTab === 'cvss3') {
@@ -131,6 +186,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     }
 
+    function closePopupWindow() {
+        if (surfaceMode === 'popup') {
+            window.close();
+        }
+    }
+
+    function handleSidebarOpenFailure(error) {
+        console.error('Unable to open sidebar:', error);
+        showToast(t('sidebarOpenFailed'));
+    }
+
+    function openSidebar() {
+        if (surfaceMode === 'sidebar') {
+            return;
+        }
+
+        if (typeof browser !== 'undefined' && browser.sidebarAction?.open) {
+            try {
+                Promise.resolve(browser.sidebarAction.open())
+                    .then(closePopupWindow)
+                    .catch(handleSidebarOpenFailure);
+            } catch (error) {
+                handleSidebarOpenFailure(error);
+            }
+            return;
+        }
+
+        if (chrome.sidePanel) {
+            if (chrome.sidePanel.open && typeof chrome.windows?.WINDOW_ID_CURRENT === 'number') {
+                try {
+                    Promise.resolve(chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT }))
+                        .then(closePopupWindow)
+                        .catch(handleSidebarOpenFailure);
+                } catch (error) {
+                    handleSidebarOpenFailure(error);
+                }
+                return;
+            }
+
+            showToast(t('sidebarRequiresChrome116'));
+            return;
+        }
+
+        showToast(t('sidebarUnsupported'));
+    }
+
+    if (sidebarToggleBtn) {
+        sidebarToggleBtn.addEventListener('click', openSidebar);
+    }
+
     // Setup copy to clipboard vs edit (differentiate single and double clicks)
     let clickTimeout = null;
     vectorDisplay.addEventListener('click', () => {
@@ -144,8 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Single click logic (copy)
                 const text = vectorDisplay.dataset.rawVector || vectorDisplay.textContent.trim();
 
-                if (text === 'Invalid metrics' || text.includes('Error') || text === '--') {
-                    showToast('Cannot copy invalid vector string');
+                if (isVectorInvalid()) {
+                    showToast(t('cannotCopyInvalidVector'));
                     return;
                 }
 
@@ -159,14 +264,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Setup Edit Mode
-    const saveIconHTML = `<svg xmlns="http://www.3w.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-save"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>`;
-    const editIconHTML = `✎`;
-
     function startEdit() {
         const text = vectorDisplay.dataset.rawVector || vectorDisplay.textContent.trim();
-        if (text === 'Invalid metrics' || text.includes('Error') || text === '--') {
-            showToast("Cannot edit an invalid vector string");
+        if (isVectorInvalid()) {
+            showToast(t('cannotEditInvalidVector'));
             return;
         }
 
@@ -174,20 +275,13 @@ document.addEventListener('DOMContentLoaded', () => {
         vectorInput.style.display = 'block';
         vectorInput.value = text;
         vectorInput.focus();
-
-        // Safely parse SVG string to DOM element to avoid innerHTML
-        const parser = new DOMParser();
-        const svgDoc = parser.parseFromString(saveIconHTML, 'image/svg+xml');
-        editVectorBtn.replaceChildren(svgDoc.documentElement);
-
-        editVectorBtn.title = "Save Vector String";
+        setEditButtonMode('save');
     }
 
     function stopEditAndSave() {
         vectorInput.style.display = 'none';
         vectorDisplay.style.display = 'block';
-        editVectorBtn.textContent = editIconHTML; // Safely set text content for edit icon
-        editVectorBtn.title = "Edit Vector String";
+        setEditButtonMode('edit');
 
         const newVector = vectorInput.value.trim();
         if (!newVector) return;
@@ -215,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (hasInvalidValue) {
-                    showToast("Error parsing vector string. Ensure proper format.");
+                    showToast(t('errorParsingVector'));
                     updateCalculations();
                     return;
                 }
@@ -246,20 +340,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 if (hasInvalidValue) {
-                    showToast("Error parsing vector string. Ensure proper format.");
+                    showToast(t('errorParsingVector'));
                     updateCalculations(); // Allows UI to display cleanly based on whatever valid chunks were parsed
                     return;
                 }
 
             } else {
-                showToast("Invalid vector string prefix. Must start with CVSS:3.1/ or CVSS:4.0/");
+                showToast(t('invalidVectorPrefix'));
                 return;
             }
             updateUISelections();
             updateCalculations();
             saveState();
         } catch (e) {
-            showToast("Error parsing vector string. Ensure proper format.");
+            showToast(t('errorParsingVector'));
         }
     }
 
@@ -278,8 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Cancel edit
             vectorInput.style.display = 'none';
             vectorDisplay.style.display = 'block';
-            editVectorBtn.textContent = '✎';
-            editVectorBtn.title = "Edit Vector String";
+            setEditButtonMode('edit');
         }
     });
 
@@ -306,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const version = "cvss" + versionStr;
 
             // Rescue corrupted state from bad manual vector string inputs before applying this valid choice
-            if (scoreDisplay.textContent === 'Error' || vectorDisplay.textContent.trim() === 'Invalid metrics') {
+            if (isVectorInvalid()) {
                 if (defaultStates[version]) {
                     state[version] = JSON.parse(JSON.stringify(defaultStates[version]));
                 }
@@ -336,10 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clearDataBtn) {
         clearDataBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            const confirmed = window.confirm("Are you sure you want to clear all extension data? This will reset all CVSS scores and clear your recently copied CWE history.");
+            const confirmed = window.confirm(t('clearDataConfirm'));
             if (confirmed) {
                 chrome.storage.local.clear(() => {
-                    alert("Data cleared successfully. The extension will now refresh.");
+                    alert(t('clearDataSuccess'));
                     window.location.reload();
                 });
             }
@@ -354,12 +447,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return 'sev-critical';
     }
 
+    function getSeverityKey(score) {
+        if (score === 0) return 'severityNone';
+        if (score < 4.0) return 'severityLow';
+        if (score < 7.0) return 'severityMedium';
+        if (score < 9.0) return 'severityHigh';
+        return 'severityCritical';
+    }
+
     function getSeverityName(score) {
-        if (score === 0) return 'None';
-        if (score < 4.0) return 'Low';
-        if (score < 7.0) return 'Medium';
-        if (score < 9.0) return 'High';
-        return 'Critical';
+        return t(getSeverityKey(score));
     }
 
     function getSeverityEmoji(score) {
@@ -384,10 +481,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.success) {
                     updateUI(result.baseMetricScore, result.baseSeverity, result.vectorString);
                 } else {
-                    updateUI('Error', 'N/A', 'Invalid metrics');
+                    updateUI(t('errorShort'), t('severityUnavailable'), t('invalidMetrics'));
                 }
             } else {
-                updateUI('--', 'none', 'Error: CVSS3 library missing');
+                updateUI('--', t('severityUnavailable'), t('errorCvss3Missing'));
             }
         } else if (currentTab === 'cvss4') {
             const m = state.cvss4.metrics;
@@ -411,10 +508,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     updateUI(vuln.score.toFixed(1), getSeverityName(vuln.score), vuln.vector.raw);
                 } catch (e) {
                     console.error("CVSS4 Calculation Error:", e);
-                    updateUI('Error', 'N/A', 'Invalid metrics');
+                    updateUI(t('errorShort'), t('severityUnavailable'), t('invalidMetrics'));
                 }
             } else {
-                updateUI('--', 'none', 'Error: CVSS4 library missing');
+                updateUI('--', t('severityUnavailable'), t('errorCvss4Missing'));
             }
         } else {
             // About tab, do nothing
@@ -423,15 +520,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateUI(score, severity, vector) {
         scoreDisplay.textContent = score;
-        severityDisplay.textContent = severity;
         vectorDisplay.textContent = vector;
         vectorDisplay.dataset.rawVector = vector;
 
         // Update colors and emoji
         const numScore = parseFloat(score);
         if (!isNaN(numScore)) {
+            severityDisplay.textContent = getSeverityName(numScore);
             scoreDisplay.className = 'score-value ' + getSeverityClass(numScore);
             severityDisplay.className = 'score-severity ' + getSeverityClass(numScore);
+            vectorDisplay.dataset.isInvalid = 'false';
 
             if (numScore === 6.9) {
                 const img = document.createElement('img');
@@ -449,9 +547,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 emojiDisplay.textContent = getSeverityEmoji(numScore);
             }
         } else {
+            severityDisplay.textContent = severity;
             scoreDisplay.className = 'score-value';
             severityDisplay.className = 'score-severity';
             emojiDisplay.textContent = '❌';
+            vectorDisplay.dataset.isInvalid = 'true';
         }
     }
 
@@ -464,16 +564,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!metricGroup) return;
 
             const [versionStr, metricName] = metricGroup.split('_');
-            const helpObj = versionStr === "3" ? (typeof CVSS31_Help !== 'undefined' ? CVSS31_Help.helpText_en : null) :
-                versionStr === "4" ? (typeof CVSS40_Help !== 'undefined' ? CVSS40_Help.helpText_en : null) : null;
-
-            if (!helpObj) return;
+            const helpObj = i18n.getCurrentLanguage() === 'en'
+                ? (versionStr === '3'
+                    ? (typeof CVSS31_Help !== 'undefined' ? CVSS31_Help.helpText_en : null)
+                    : versionStr === '4'
+                        ? (typeof CVSS40_Help !== 'undefined' ? CVSS40_Help.helpText_en : null)
+                        : null)
+                : null;
 
             // Apply to the metric heading/label itself
             const label = metricDiv.querySelector('.metric-label');
             const headingKey = metricName + "_Heading";
-            if (label && helpObj[headingKey]) {
-                label.title = helpObj[headingKey];
+            const localizedLabel = t(getMetricLabelKey(metricGroup));
+            if (label) {
+                label.textContent = localizedLabel;
+                label.title = helpObj && helpObj[headingKey] ? helpObj[headingKey] : localizedLabel;
                 // Visual cue that it has a tooltip
                 label.style.textDecoration = 'underline dotted rgba(255,255,255,0.3)';
                 label.style.cursor = 'help';
@@ -482,31 +587,32 @@ document.addEventListener('DOMContentLoaded', () => {
             // Apply to each option button
             optionsContainer.querySelectorAll('.opt-btn').forEach(btn => {
                 const optVal = btn.dataset.val;
+                const shortName = t(getMetricOptionKey(metricGroup, optVal));
+                let spanVal = btn.querySelector('.opt-val');
+                let spanName = btn.querySelector('.opt-name');
 
-                // Extract original title (e.g. "Network") as the short display name
-                // Some buttons might have already been processed if this function runs multiple times,
-                // but since innerHTML is overwritten, we rely on the data-val for the Initial.
-                // To be safe and idempotent, we check if it already has child elements
-                if (btn.children.length === 0) {
-                    const shortName = btn.title || optVal;
+                if (!spanVal || !spanName) {
                     btn.textContent = ''; // clear text
 
-                    const spanVal = document.createElement('span');
+                    spanVal = document.createElement('span');
                     spanVal.className = 'opt-val';
-                    spanVal.textContent = optVal;
 
-                    const spanName = document.createElement('span');
+                    spanName = document.createElement('span');
                     spanName.className = 'opt-name';
-                    spanName.textContent = shortName;
 
                     btn.appendChild(spanVal);
                     btn.appendChild(spanName);
                 }
 
+                spanVal.textContent = optVal;
+                spanName.textContent = shortName;
+
                 // Add the official FIRST.org long help text to the browser native tooltip
                 const labelKey = metricName + "_" + optVal + "_Label";
-                if (helpObj[labelKey]) {
+                if (helpObj && helpObj[labelKey]) {
                     btn.title = helpObj[labelKey];
+                } else {
+                    btn.title = shortName;
                 }
             });
         });
@@ -524,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const [, metricAbbr] = metricGroup.split('_'); // 'AV' etc
 
                 let rawText = vectorDisplay.dataset.rawVector;
-                if (!rawText || rawText === 'Invalid metrics' || rawText.includes('Error') || rawText === '--') return;
+                if (!rawText || isVectorInvalid()) return;
 
                 // Create a RegEx to find the exact metric attribute like "/AV:N/" or "/AV:N"
                 // The regex captures three parts: the prefix (slash or start), the metric chunk (e.g. AV:N), and suffix
@@ -558,6 +664,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    languageButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            if (button.dataset.lang === i18n.getCurrentLanguage()) {
+                return;
+            }
+
+            await i18n.setLanguage(button.dataset.lang);
+        });
+    });
+
+    document.addEventListener('ned:language-changed', () => {
+        refreshStaticText();
+        applyHelpTextToButtons();
+        updateCalculations();
+
+        if (searchInput) {
+            searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    });
+
     // Initialize application state
     loadState(() => {
         // Activate correct tab based on saved state
@@ -567,18 +693,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(currentTab).classList.add('active');
 
         // Render UI
+        refreshStaticText();
         updateUISelections();
-        updateCalculations();
         applyHelpTextToButtons();
+        updateCalculations();
         setupHoverHighlights();
-
-        const headerEl = document.querySelector('header');
-
-        if (currentTab === 'cwe' || currentTab === 'about') {
-            headerEl.classList.add('readonly-mode');
-        } else {
-            headerEl.classList.remove('readonly-mode');
-        }
+        updateReadonlyState();
     });
 
     // --- CWE Fuzzy Search Integration ---
@@ -612,7 +732,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fuseCWE = new Fuse(cweData, options);
 
             const metaDiv = document.getElementById('cwe-metadata');
-            if (metaDiv) metaDiv.textContent = `CWE Database v${version} | ${entries.length} Weaknesses`;
+            if (metaDiv) metaDiv.textContent = t('cweMetadataLoaded', [version, entries.length]);
 
             if (searchInput && searchInput.value.trim() === '') {
                 searchInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -623,7 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsContainer.textContent = ''; // clear
             const errDiv = document.createElement('div');
             errDiv.className = 'cwe-empty-state';
-            errDiv.textContent = 'Failed to load offline dictionary. Please rebuild data.';
+            errDiv.textContent = t('failedLoadOfflineDictionary');
             resultsContainer.appendChild(errDiv);
         });
 
@@ -650,11 +770,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     historyHeader.className = 'cwe-history-header';
 
                     const titleSpan = document.createElement('span');
-                    titleSpan.textContent = 'Recently Copied';
+                    titleSpan.textContent = t('recentlyCopied');
 
                     const clearBtn = document.createElement('span');
                     clearBtn.className = 'cwe-history-clear';
-                    clearBtn.textContent = 'Clear';
+                    clearBtn.textContent = t('clearAction');
                     clearBtn.addEventListener('click', () => {
                         recentCWEs = [];
                         chrome.storage.local.set({ recentCWEs });
@@ -674,7 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     const emptyDiv = document.createElement('div');
                     emptyDiv.className = 'cwe-empty-state';
-                    emptyDiv.textContent = 'Type above to search MITRE CWEs...';
+                    emptyDiv.textContent = t('cweEmptyPrompt');
                     resultsContainer.appendChild(emptyDiv);
                 }
                 return;
@@ -706,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 resultsContainer.textContent = '';
                 const noneDiv = document.createElement('div');
                 noneDiv.className = 'cwe-empty-state';
-                noneDiv.textContent = 'No matching vulnerabilities found.';
+                noneDiv.textContent = t('noMatchingVulnerabilities');
                 resultsContainer.appendChild(noneDiv);
                 return;
             }
@@ -720,11 +840,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCWEResults(resultsArray) {
         for (let i = 0; i < resultsArray.length; i++) {
             const item = resultsArray[i].item;
-            const descEscaped = item.description ? item.description : 'No description available';
+            const descEscaped = item.description ? item.description : t('noDescriptionAvailable');
 
             const resultItem = document.createElement('div');
             resultItem.className = 'cwe-result-item';
-            resultItem.title = `Click to copy ${item.id}`;
+            resultItem.title = t('copyCweTitle', item.id);
 
             const header = document.createElement('div');
             header.className = 'cwe-result-header';
@@ -745,7 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
             linkBtn.style.display = 'flex';
             linkBtn.style.alignItems = 'center';
             linkBtn.style.padding = '2px';
-            linkBtn.title = `Open ${item.id} on cwe.mitre.org`;
+            linkBtn.title = t('openCweTitle', item.id);
             linkBtn.target = '_blank';
             const cweNum = item.id.replace('CWE-', '');
             linkBtn.href = `https://cwe.mitre.org/data/definitions/${cweNum}.html`;
@@ -788,7 +908,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 const summary = document.createElement('summary');
-                summary.textContent = 'More Info';
+                summary.textContent = t('moreInfo');
                 details.appendChild(summary);
 
                 if (item.alternate_terms && item.alternate_terms.trim() !== '') {
@@ -796,7 +916,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     altTerms.className = 'cwe-alt-terms';
 
                     const strong = document.createElement('strong');
-                    strong.textContent = 'Alternate Terms:';
+                    strong.textContent = t('alternateTerms');
                     altTerms.appendChild(strong);
                     altTerms.appendChild(document.createElement('br'));
 
@@ -838,7 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
             el.addEventListener('click', function () {
                 const cweId = this.querySelector('.cwe-id-badge').textContent;
                 navigator.clipboard.writeText(cweId).then(() => {
-                    showToast(`Copied ${cweId}`);
+                    showToast(t('copiedCwe', cweId));
                     saveRecentCWE(cweId);
                 });
             });

@@ -1,0 +1,482 @@
+{
+  "extensionName": {
+    "message": "Ned - CVSS 计算器"
+  },
+  "extensionDescription": {
+    "message": "离线计算 CVSS 3.1 和 4.0 分数，并内置 MITRE CWE 数据库用于模糊检索。"
+  },
+  "actionTitle": {
+    "message": "打开 Ned - CVSS 计算器"
+  },
+  "documentTitle": {
+    "message": "Ned - CVSS 计算器"
+  },
+  "appSubtitle": {
+    "message": "CVSS 计算器"
+  },
+  "switchLanguage": {
+    "message": "切换语言"
+  },
+  "copiedBadge": {
+    "message": "已复制"
+  },
+  "openFirstCalculator": {
+    "message": "在 FIRST.org 计算器中打开"
+  },
+  "openSidebar": {
+    "message": "侧栏"
+  },
+  "openSidebarTitle": {
+    "message": "打开浏览器常驻侧栏"
+  },
+  "resetScore": {
+    "message": "重置分数"
+  },
+  "readOnlyMode": {
+    "message": "只读模式"
+  },
+  "editVectorString": {
+    "message": "编辑向量字符串"
+  },
+  "saveVectorString": {
+    "message": "保存向量字符串"
+  },
+  "vectorDisplayTitle": {
+    "message": "单击复制，双击编辑"
+  },
+  "tabCvss3": {
+    "message": "CVSS 3.1"
+  },
+  "tabCvss4": {
+    "message": "CVSS 4.0"
+  },
+  "tabCwe": {
+    "message": "CWE"
+  },
+  "tabAbout": {
+    "message": "关于"
+  },
+  "groupBaseMetrics": {
+    "message": "基础指标"
+  },
+  "groupVulnerableSystemImpactMetrics": {
+    "message": "目标系统影响指标"
+  },
+  "groupSubsequentSystemImpactMetrics": {
+    "message": "损害会传播到链路上的其他系统指标"
+  },
+  "cweSearchTitle": {
+    "message": "CWE 检索"
+  },
+  "cweSearchPlaceholder": {
+    "message": "搜索漏洞（例如 SQL Injection...）"
+  },
+  "cweEmptyPrompt": {
+    "message": "输入关键词以搜索 MITRE CWE..."
+  },
+  "aboutTagline": {
+    "message": "“我是后方支援那个人。”"
+  },
+  "aboutImageAlt": {
+    "message": "Ned，后方支援的那个人"
+  },
+  "offlinePrivateStrong": {
+    "message": "离线与隐私："
+  },
+  "offlinePrivateDescription": {
+    "message": "内置的 FIRST.org 与 Red Hat JavaScript 计算逻辑会将评估过程保留在本地设备中，不会收集外部数据。"
+  },
+  "acknowledgementsTitle": {
+    "message": "鸣谢："
+  },
+  "acknowledgementsLine1": {
+    "message": "CVSS v3.1：Copyright (c) 2019, FIRST.ORG, INC.（BSD-2-Clause）"
+  },
+  "acknowledgementsLine2": {
+    "message": "CVSS v4.0：Copyright FIRST、Red Hat 及贡献者。（SPDX: BSD-2-Clause）"
+  },
+  "acknowledgementsLine3": {
+    "message": "Fuse.js：Copyright (c) 2024 Kiro Risk（Apache-2.0）"
+  },
+  "sourceCodeLink": {
+    "message": "源代码"
+  },
+  "profileLink": {
+    "message": "主页"
+  },
+  "madeByLabel": {
+    "message": "作者"
+  },
+  "privacyPolicy": {
+    "message": "隐私政策"
+  },
+  "clearData": {
+    "message": "清除数据"
+  },
+  "clearLocalStorage": {
+    "message": "清除本地存储"
+  },
+  "clearDataConfirm": {
+    "message": "确认清除所有扩展数据吗？这会重置全部 CVSS 分数，并移除最近复制的 CWE 历史。"
+  },
+  "clearDataSuccess": {
+    "message": "数据已清除，扩展将立即刷新。"
+  },
+  "cannotOpenInvalidVector": {
+    "message": "无法打开无效的向量字符串"
+  },
+  "cannotCopyInvalidVector": {
+    "message": "无法复制无效的向量字符串"
+  },
+  "cannotEditInvalidVector": {
+    "message": "无法编辑无效的向量字符串"
+  },
+  "sidebarUnsupported": {
+    "message": "当前浏览器版本不支持侧栏"
+  },
+  "sidebarRequiresChrome116": {
+    "message": "当前 Chrome 版本无法从弹窗直接打开侧栏，请升级到 Chrome 116 及以上版本。"
+  },
+  "sidebarOpenFailed": {
+    "message": "无法从当前窗口打开浏览器侧栏"
+  },
+  "errorParsingVector": {
+    "message": "向量字符串解析失败，请确认格式正确。"
+  },
+  "invalidVectorPrefix": {
+    "message": "向量字符串前缀无效，必须以 CVSS:3.1/ 或 CVSS:4.0/ 开头。"
+  },
+  "severityNone": {
+    "message": "无"
+  },
+  "severityLow": {
+    "message": "低"
+  },
+  "severityMedium": {
+    "message": "中"
+  },
+  "severityHigh": {
+    "message": "高"
+  },
+  "severityCritical": {
+    "message": "严重"
+  },
+  "severityUnavailable": {
+    "message": "不可用"
+  },
+  "severityUnknown": {
+    "message": "未知"
+  },
+  "errorShort": {
+    "message": "错误"
+  },
+  "invalidMetrics": {
+    "message": "无效指标"
+  },
+  "errorCvss3Missing": {
+    "message": "错误：缺少 CVSS 3.1 计算库"
+  },
+  "errorCvss4Missing": {
+    "message": "错误：缺少 CVSS 4.0 计算库"
+  },
+  "cweMetadataLoading": {
+    "message": "CWE 数据库 | 加载中..."
+  },
+  "cweMetadataLoaded": {
+    "message": "CWE 数据库 v$1 | $2 个弱点"
+  },
+  "failedLoadOfflineDictionary": {
+    "message": "离线字典加载失败，请重新生成数据。"
+  },
+  "recentlyCopied": {
+    "message": "最近复制"
+  },
+  "clearAction": {
+    "message": "清除"
+  },
+  "noMatchingVulnerabilities": {
+    "message": "未找到匹配的漏洞条目。"
+  },
+  "noDescriptionAvailable": {
+    "message": "暂无描述"
+  },
+  "copyCweTitle": {
+    "message": "单击复制 $1"
+  },
+  "openCweTitle": {
+    "message": "在 cwe.mitre.org 打开 $1"
+  },
+  "moreInfo": {
+    "message": "更多信息"
+  },
+  "alternateTerms": {
+    "message": "别名术语："
+  },
+  "copiedCwe": {
+    "message": "已复制 $1"
+  },
+  "metric_3_AV": {
+    "message": "攻击向量 (AV)"
+  },
+  "metric_3_AC": {
+    "message": "攻击复杂度 (AC)"
+  },
+  "metric_3_PR": {
+    "message": "所需权限 (PR)"
+  },
+  "metric_3_UI": {
+    "message": "用户交互 (UI)"
+  },
+  "metric_3_S": {
+    "message": "作用域 (S)"
+  },
+  "metric_3_C": {
+    "message": "机密性 (C)"
+  },
+  "metric_3_I": {
+    "message": "完整性 (I)"
+  },
+  "metric_3_A": {
+    "message": "可用性 (A)"
+  },
+  "metric_4_AV": {
+    "message": "攻击途径（AV）"
+  },
+  "metric_4_AC": {
+    "message": "攻击复杂度（AC）"
+  },
+  "metric_4_AT": {
+    "message": "攻击前提要求（AT）"
+  },
+  "metric_4_PR": {
+    "message": "所需权限（PR）"
+  },
+  "metric_4_UI": {
+    "message": "用户交互（UI）"
+  },
+  "metric_4_VC": {
+    "message": "机密性影响（VC）"
+  },
+  "metric_4_VI": {
+    "message": "完整性影响（VI）"
+  },
+  "metric_4_VA": {
+    "message": "可用性影响（VA）"
+  },
+  "metric_4_SC": {
+    "message": "机密性影响（SC）"
+  },
+  "metric_4_SI": {
+    "message": "完整性影响（SI）"
+  },
+  "metric_4_SA": {
+    "message": "可用性影响（SA）"
+  },
+  "option_3_AV_N": {
+    "message": "网络"
+  },
+  "option_3_AV_A": {
+    "message": "相邻"
+  },
+  "option_3_AV_L": {
+    "message": "本地"
+  },
+  "option_3_AV_P": {
+    "message": "物理"
+  },
+  "option_3_AC_L": {
+    "message": "低"
+  },
+  "option_3_AC_H": {
+    "message": "高"
+  },
+  "option_3_PR_N": {
+    "message": "无"
+  },
+  "option_3_PR_L": {
+    "message": "低"
+  },
+  "option_3_PR_H": {
+    "message": "高"
+  },
+  "option_3_UI_N": {
+    "message": "无"
+  },
+  "option_3_UI_R": {
+    "message": "需要"
+  },
+  "option_3_S_U": {
+    "message": "未变"
+  },
+  "option_3_S_C": {
+    "message": "已变"
+  },
+  "option_3_C_N": {
+    "message": "无"
+  },
+  "option_3_C_L": {
+    "message": "低"
+  },
+  "option_3_C_H": {
+    "message": "高"
+  },
+  "option_3_I_N": {
+    "message": "无"
+  },
+  "option_3_I_L": {
+    "message": "低"
+  },
+  "option_3_I_H": {
+    "message": "高"
+  },
+  "option_3_A_N": {
+    "message": "无"
+  },
+  "option_3_A_L": {
+    "message": "低"
+  },
+  "option_3_A_H": {
+    "message": "高"
+  },
+  "option_4_AV_N": {
+    "message": "网络"
+  },
+  "option_4_AV_A": {
+    "message": "相邻"
+  },
+  "option_4_AV_L": {
+    "message": "本地"
+  },
+  "option_4_AV_P": {
+    "message": "物理"
+  },
+  "option_4_AC_L": {
+    "message": "低"
+  },
+  "option_4_AC_H": {
+    "message": "高"
+  },
+  "option_4_AT_N": {
+    "message": "无"
+  },
+  "option_4_AT_P": {
+    "message": "存在"
+  },
+  "option_4_PR_N": {
+    "message": "无"
+  },
+  "option_4_PR_L": {
+    "message": "低"
+  },
+  "option_4_PR_H": {
+    "message": "高"
+  },
+  "option_4_UI_N": {
+    "message": "无"
+  },
+  "option_4_UI_P": {
+    "message": "被动"
+  },
+  "option_4_UI_A": {
+    "message": "主动"
+  },
+  "option_4_VC_H": {
+    "message": "高"
+  },
+  "option_4_VC_L": {
+    "message": "低"
+  },
+  "option_4_VC_N": {
+    "message": "无"
+  },
+  "option_4_VI_H": {
+    "message": "高"
+  },
+  "option_4_VI_L": {
+    "message": "低"
+  },
+  "option_4_VI_N": {
+    "message": "无"
+  },
+  "option_4_VA_H": {
+    "message": "高"
+  },
+  "option_4_VA_L": {
+    "message": "低"
+  },
+  "option_4_VA_N": {
+    "message": "无"
+  },
+  "option_4_SC_H": {
+    "message": "高"
+  },
+  "option_4_SC_L": {
+    "message": "低"
+  },
+  "option_4_SC_N": {
+    "message": "无"
+  },
+  "option_4_SI_S": {
+    "message": "安全"
+  },
+  "option_4_SI_H": {
+    "message": "高"
+  },
+  "option_4_SI_L": {
+    "message": "低"
+  },
+  "option_4_SI_N": {
+    "message": "无"
+  },
+  "option_4_SA_S": {
+    "message": "安全"
+  },
+  "option_4_SA_H": {
+    "message": "高"
+  },
+  "option_4_SA_L": {
+    "message": "低"
+  },
+  "option_4_SA_N": {
+    "message": "无"
+  },
+  "privacyDocumentTitle": {
+    "message": "Ned CVSS 计算器 - 隐私政策"
+  },
+  "privacyTitle": {
+    "message": "隐私政策"
+  },
+  "effectiveDateLabel": {
+    "message": "生效日期："
+  },
+  "effectiveDateValue": {
+    "message": "2026 年 8 月 17 日"
+  },
+  "privacyOverviewHeading": {
+    "message": "概述"
+  },
+  "privacyOverviewBody": {
+    "message": "Ned 是一个完全离线、在客户端运行的浏览器扩展，重点关注隐私与速度。"
+  },
+  "privacyDataCollectionHeading": {
+    "message": "数据收集"
+  },
+  "privacyDataCollectionBody": {
+    "message": "本扩展不会收集任何个人数据、遥测数据或分析数据，也不会调用任何外部 API。所有 CVSS 计算都通过内置 JavaScript 库在浏览器本地完成。"
+  },
+  "privacyPermissionsHeading": {
+    "message": "权限说明"
+  },
+  "privacyPermissionsBody": {
+    "message": "扩展仅使用最小权限，包括本地存储，以及在你选择复制向量字符串或 CWE ID 时所需的剪贴板复制能力。它不会跟踪浏览历史，也不会读取网页内容。"
+  },
+  "privacyOpenSourceHeading": {
+    "message": "开源"
+  },
+  "privacyOpenSourcePrefix": {
+    "message": "你可以在"
+  },
+  "privacyGithubLinkText": {
+    "message": "GitHub 开源仓库"
+  }
+}

@@ -134,6 +134,9 @@
   "sidebarUnsupported": {
     "message": "Sidebar is not supported in this browser version"
   },
+  "sidebarRequiresChrome116": {
+    "message": "This Chrome version cannot open the sidebar from the popup. Update to Chrome 116+."
+  },
   "sidebarOpenFailed": {
     "message": "Unable to open the browser sidebar from this window"
   },

@@ -134,6 +134,9 @@
   "sidebarUnsupported": {
     "message": "当前浏览器版本不支持侧栏"
   },
+  "sidebarRequiresChrome116": {
+    "message": "当前 Chrome 版本无法从弹窗直接打开侧栏，请升级到 Chrome 116 及以上版本。"
+  },
   "sidebarOpenFailed": {
     "message": "无法从当前窗口打开浏览器侧栏"
   },

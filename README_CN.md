@@ -8,7 +8,7 @@ Ned 是一个本地运行的浏览器扩展，用于直接在弹窗中计算 Com
 
 - **支持 CVSS v3.1 与 v4.0**：使用标准指标计算两个版本的分数。
 - **中英文切换**：在弹窗与隐私页之间切换英文和简体中文界面。
-- **支持常驻侧栏**：可在 Chrome、Edge 与 Firefox 的浏览器侧栏中打开 Ned，便于长时间对照评分。
+- **支持常驻侧栏**：可在 Edge、Firefox 与 Chrome 116+ 的浏览器侧栏中打开 Ned，便于长时间对照评分。
 - **离线 MITRE CWE 检索**：通过内置的离线模糊搜索页快速定位弱点条目，并支持悬浮查看描述。
 - **隐私优先（完全离线）**：所有计算与检索都在浏览器本地完成，不会调用外部 API。
 - **复制向量字符串 / CWE ID**：单击即可复制向量字符串或 CWE 编号。
@@ -17,9 +17,8 @@ Ned 是一个本地运行的浏览器扩展，用于直接在弹窗中计算 Com
 
 ### 预览
 <div style="display: flex; flex-direction: row; gap: 10px;">
-  <img src="images/store/Ned-3.1.png" width="30%" alt="CVSS 3.1">
-  <img src="images/store/Ned-4.0.png" width="30%" alt="CVSS 4.0">
-  <img src="images/store/Ned-CWE.png" width="30%" alt="CWE Search">
+  <img src="images/store/CN/悬浮.png" width="48%" alt="中文弹窗预览">
+  <img src="images/store/CN/侧边栏.png" width="48%" alt="中文侧边栏预览">
 </div>
 
 ## 安装方式
@@ -45,7 +44,7 @@ python3 scripts/build_variants.py
 2. 打开基于 Chromium 的浏览器，进入 `chrome://extensions/`（Microsoft Edge 使用 `edge://extensions/`）。
 3. 打开右上角的 **Developer mode**。
 4. 点击 **Load unpacked**，选择 `dev/chromium` 目录。
-5. 打开扩展弹窗并点击 **侧栏**，即可切换到浏览器侧栏。Chrome 与 Edge 可在浏览器侧栏设置中选择显示在左侧或右侧。
+5. 打开扩展弹窗并点击 **侧栏**，即可切换到浏览器侧栏。Chrome 需要 116 及以上版本才能从弹窗直接打开侧栏。Chrome 与 Edge 可在浏览器侧栏设置中选择显示在左侧或右侧。
 
 #### Firefox
 1. 克隆或下载本仓库。

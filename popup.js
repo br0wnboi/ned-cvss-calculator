@@ -213,14 +213,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        if (chrome.sidePanel?.open && typeof chrome.windows?.WINDOW_ID_CURRENT === 'number') {
-            try {
-                Promise.resolve(chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT }))
-                    .then(closePopupWindow)
-                    .catch(handleSidebarOpenFailure);
-            } catch (error) {
-                handleSidebarOpenFailure(error);
+        if (chrome.sidePanel) {
+            if (chrome.sidePanel.open && typeof chrome.windows?.WINDOW_ID_CURRENT === 'number') {
+                try {
+                    Promise.resolve(chrome.sidePanel.open({ windowId: chrome.windows.WINDOW_ID_CURRENT }))
+                        .then(closePopupWindow)
+                        .catch(handleSidebarOpenFailure);
+                } catch (error) {
+                    handleSidebarOpenFailure(error);
+                }
+                return;
             }
+
+            showToast(t('sidebarRequiresChrome116'));
             return;
         }
 

@@ -8,3 +8,5 @@ dev/
 .agents/
 store-materials.md
 *.zip
+scripts/models/
+embedding-research/

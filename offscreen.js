@@ -6,11 +6,12 @@ if (env) {
     env.allowLocalModels = false;
     env.allowRemoteModels = true;
     env.backends.onnx.wasm.numThreads = 1;
+    env.backends.onnx.wasm.wasmPaths = chrome.runtime.getURL('lib/transformers/');
 }
 
 let embedder = null;
-
-let embeddedCweDB = [];
+let embeddedCweMeta = [];
+let embeddedCweVectors = null;
 
 function cosineSimilarity(vecA, vecB) {
     let dotProduct = 0, normA = 0, normB = 0;
@@ -23,17 +24,26 @@ function cosineSimilarity(vecA, vecB) {
 }
 
 async function initEmbedder() {
-    if (embeddedCweDB.length === 0) {
-        chrome.runtime.sendMessage({ type: 'SEMANTIC_STATUS', status: 'Loading CWE database...' });
-        const res = await fetch(chrome.runtime.getURL('data/cwe-embeddings.json'));
-        embeddedCweDB = await res.json();
+    if (embeddedCweMeta.length === 0) {
+        console.time("Load Binary DB & Meta");
+        
+        const metaRes = await fetch(chrome.runtime.getURL('data/cwe-embeddings-meta.json'));
+        embeddedCweMeta = await metaRes.json();
+        
+        const binRes = await fetch(chrome.runtime.getURL('data/cwe-embeddings.bin'));
+        const arrayBuffer = await binRes.arrayBuffer();
+        embeddedCweVectors = new Float32Array(arrayBuffer);
+        
+        console.timeEnd("Load Binary DB & Meta");
     }
 
     if (!embedder) {
         chrome.runtime.sendMessage({ type: 'SEMANTIC_STATUS', status: 'Loading ML Model (~25MB)...' });
-        embedder = await pipeline('feature-extraction', 'Xenova/bge-small-en-v1.5', {
+        console.time("Load Embedder (Pipeline + WASM init)");
+        embedder = await pipeline('feature-extraction', 'Snowflake/snowflake-arctic-embed-xs', {
             quantized: true,
         });
+        console.timeEnd("Load Embedder (Pipeline + WASM init)");
         chrome.runtime.sendMessage({ type: 'SEMANTIC_STATUS', status: 'Ready' });
     }
 }
@@ -42,22 +52,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'SEMANTIC_SEARCH') {
         (async () => {
             try {
+                console.time("Total Search Request");
                 await initEmbedder();
                 
                 // BGE-small requires queries to be prefixed for retrieval tasks
                 const queryStr = "Represent this sentence for searching relevant passages: " + message.query;
+                
+                console.time("Model Inference");
                 const output = await embedder(queryStr, { pooling: 'mean', normalize: true });
                 const queryVector = Array.from(output.data);
+                console.timeEnd("Model Inference");
                 
+                console.time("Cosine Similarity Sweep");
                 const scoresMap = new Map();
                 const namesMap = new Map();
 
-                // Because cwe-embeddings.json now has multiple vectors per ID, keep the max score
-                for (const item of embeddedCweDB) {
-                    const score = cosineSimilarity(queryVector, item.vector);
-                    if (!scoresMap.has(item.id) || score > scoresMap.get(item.id)) {
-                        scoresMap.set(item.id, score);
-                        namesMap.set(item.id, item.name);
+                const vecLength = queryVector.length;
+
+                for (let i = 0; i < embeddedCweMeta.length; i++) {
+                    const meta = embeddedCweMeta[i];
+                    const offset = i * vecLength;
+                    const chunkVector = embeddedCweVectors.subarray(offset, offset + vecLength);
+                    
+                    const score = cosineSimilarity(queryVector, chunkVector);
+                    
+                    if (!scoresMap.has(meta.id) || score > scoresMap.get(meta.id)) {
+                        scoresMap.set(meta.id, score);
+                        namesMap.set(meta.id, meta.name);
                     }
                 }
                 
@@ -67,6 +88,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     score: score
                 })).sort((a, b) => b.score - a.score);
                 
+                console.timeEnd("Cosine Similarity Sweep");
+                console.timeEnd("Total Search Request");
                 sendResponse({ success: true, results });
             } catch (error) {
                 console.error("Semantic search error:", error);

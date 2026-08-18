@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let currentTab = 'cvss3';
+    let justTranslated = false;
+    let hasSeenTranslationWarning = false;
 
     // Default fresh states
     const defaultStates = {
@@ -35,13 +37,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let state = JSON.parse(JSON.stringify(defaultStates));
 
     function saveState() {
-        chrome.storage.local.set({ cvssState: state, activeTab: currentTab });
+        chrome.storage.local.set({ cvssState: state, activeTab: currentTab, hasSeenTranslationWarning });
     }
 
     let recentCWEs = []; // Global history array
+    let recentQueries = []; // User's previous text searches
 
     function loadState(callback) {
-        chrome.storage.local.get(['cvssState', 'activeTab', 'recentCWEs'], (result) => {
+        chrome.storage.local.get(['cvssState', 'activeTab', 'recentCWEs', 'recentQueries', 'hasSeenTranslationWarning'], (result) => {
             if (result.cvssState) {
                 state = result.cvssState;
             }
@@ -51,7 +54,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (result.recentCWEs) {
                 recentCWEs = result.recentCWEs;
             }
-            callback();
+            if (result.recentQueries) {
+                recentQueries = result.recentQueries;
+            }
+            if (result.hasSeenTranslationWarning) {
+                hasSeenTranslationWarning = result.hasSeenTranslationWarning;
+            }
+            if (callback) callback();
         });
     }
 
@@ -60,6 +69,14 @@ document.addEventListener('DOMContentLoaded', () => {
         recentCWEs.unshift(cweId);
         if (recentCWEs.length > 5) recentCWEs = recentCWEs.slice(0, 5);
         chrome.storage.local.set({ recentCWEs });
+    }
+
+    function saveRecentQuery(query) {
+        if (!query || query.length < 3) return;
+        recentQueries = recentQueries.filter(q => q.toLowerCase() !== query.toLowerCase());
+        recentQueries.unshift(query);
+        if (recentQueries.length > 5) recentQueries = recentQueries.slice(0, 5);
+        chrome.storage.local.set({ recentQueries });
     }
 
     function updateUISelections() {
@@ -123,8 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function showToast(message) {
+    function showToast(message, type = 'success') {
         toast.textContent = message;
+        if (type === 'warning') {
+            toast.classList.add('warning');
+        } else {
+            toast.classList.remove('warning');
+        }
         toast.classList.add('show');
         setTimeout(() => {
             toast.classList.remove('show');
@@ -146,6 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (text === 'Invalid metrics' || text.includes('Error') || text === '--') {
                     showToast('Cannot copy invalid vector string');
+                    return;
+                }
+
+                if (justTranslated) {
+                    showToast("Warning: You are copying an approximated vector. Please review it first.", "warning");
                     return;
                 }
 
@@ -297,6 +324,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             const actualBtn = e.target.closest('.opt-btn');
             if (!actualBtn) return;
+            
+            justTranslated = false;
 
             const parent = actualBtn.parentElement;
             const metricGroup = parent.dataset.metric;
@@ -629,6 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Quick Filter Chips
     document.querySelectorAll('.cwe-chip').forEach(chip => {
+        if (chip.id === 'semantic-test-btn') return;
         chip.addEventListener('click', () => {
             if (searchInput) {
                 searchInput.value = chip.textContent;
@@ -637,83 +667,145 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    const semanticBtn = document.getElementById('semantic-test-btn');
+    const semanticStatus = document.getElementById('semantic-status');
+
+    if (semanticBtn) {
+        semanticBtn.addEventListener('click', () => {
+            const query = searchInput?.value.trim();
+            if (!query) {
+                showToast("Please enter a description to search.");
+                return;
+            }
+
+            semanticStatus.style.display = 'block';
+            semanticStatus.textContent = 'Initializing AI...';
+            resultsContainer.textContent = ''; 
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'cwe-empty-state';
+            loadingDiv.textContent = 'Running semantic match...';
+            resultsContainer.appendChild(loadingDiv);
+
+            chrome.runtime.sendMessage({ target: 'offscreen', action: 'SEMANTIC_SEARCH', query }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error("Messaging Error:", chrome.runtime.lastError);
+                    semanticStatus.textContent = 'Error: ' + chrome.runtime.lastError.message;
+                    resultsContainer.textContent = ''; 
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'cwe-empty-state';
+                    errorDiv.textContent = 'Failed to connect to ML worker.';
+                    resultsContainer.appendChild(errorDiv);
+                    return;
+                }
+                
+                if (response && response.success) {
+                    saveRecentQuery(query);
+                    semanticStatus.style.display = 'none';
+                    resultsContainer.textContent = '';
+                    const mappedResults = response.results.map(r => {
+                        const actualCwe = cweData.find(c => c.id === r.id) || { id: r.id, name: r.name };
+                        return {
+                            item: {
+                                ...actualCwe,
+                                name: `${actualCwe.name} [Match: ${(r.score * 100).toFixed(1)}%]`
+                            }
+                        };
+                    });
+                    renderCWEResults(mappedResults);
+                } else {
+                    semanticStatus.textContent = 'Search failed: ' + (response?.error || 'Unknown error');
+                }
+            });
+        });
+    }
+
+    chrome.runtime.onMessage.addListener((msg) => {
+        if (msg.type === 'SEMANTIC_STATUS' && semanticStatus) {
+            semanticStatus.textContent = msg.status;
+        }
+    });
+
     // Handle Search Bar Input
+    let searchTimeout = null;
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.trim();
+            if (searchTimeout) clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = e.target.value.trim();
 
-            if (!query) {
-                // Return to empty state or history if search bar is cleared
-                resultsContainer.textContent = '';
-                if (recentCWEs && recentCWEs.length > 0 && cweData.length > 0) {
-                    const historyHeader = document.createElement('div');
-                    historyHeader.className = 'cwe-history-header';
+                if (!query) {
+                    // Return to empty state or history if search bar is cleared
+                    resultsContainer.textContent = '';
+                    if (recentCWEs && recentCWEs.length > 0 && cweData.length > 0) {
+                        const historyHeader = document.createElement('div');
+                        historyHeader.className = 'cwe-history-header';
 
-                    const titleSpan = document.createElement('span');
-                    titleSpan.textContent = 'Recently Copied';
+                        const titleSpan = document.createElement('span');
+                        titleSpan.textContent = 'Recently Copied';
 
-                    const clearBtn = document.createElement('span');
-                    clearBtn.className = 'cwe-history-clear';
-                    clearBtn.textContent = 'Clear';
-                    clearBtn.addEventListener('click', () => {
-                        recentCWEs = [];
-                        chrome.storage.local.set({ recentCWEs });
-                        searchInput.dispatchEvent(new Event('input', { bubbles: true })); // Re-trigger
-                    });
+                        const clearBtn = document.createElement('span');
+                        clearBtn.className = 'cwe-history-clear';
+                        clearBtn.textContent = 'Clear';
+                        clearBtn.addEventListener('click', () => {
+                            recentCWEs = [];
+                            chrome.storage.local.set({ recentCWEs });
+                            searchInput.dispatchEvent(new Event('input', { bubbles: true })); // Re-trigger
+                        });
 
-                    historyHeader.appendChild(titleSpan);
-                    historyHeader.appendChild(clearBtn);
-                    resultsContainer.appendChild(historyHeader);
+                        historyHeader.appendChild(titleSpan);
+                        historyHeader.appendChild(clearBtn);
+                        resultsContainer.appendChild(historyHeader);
 
-                    const historyResults = recentCWEs.map(id => {
-                        const item = cweData.find(c => c.id === id);
-                        return item ? { item } : null;
-                    }).filter(Boolean);
+                        const historyResults = recentCWEs.map(id => {
+                            const item = cweData.find(c => c.id === id);
+                            return item ? { item } : null;
+                        }).filter(Boolean);
 
-                    renderCWEResults(historyResults.slice(0, 5));
-                } else {
-                    const emptyDiv = document.createElement('div');
-                    emptyDiv.className = 'cwe-empty-state';
-                    emptyDiv.textContent = 'Type above to search MITRE CWEs...';
-                    resultsContainer.appendChild(emptyDiv);
+                        renderCWEResults(historyResults.slice(0, 5));
+                    } else {
+                        const emptyDiv = document.createElement('div');
+                        emptyDiv.className = 'cwe-empty-state';
+                        emptyDiv.textContent = 'Type above to search MITRE CWEs...';
+                        resultsContainer.appendChild(emptyDiv);
+                    }
+                    return;
                 }
-                return;
-            }
 
-            if (!fuseCWE) return; // Data not loaded yet
+                if (!fuseCWE) return; // Data not loaded yet
 
-            // Handle multiple queries separated by commas
-            let results = [];
-            if (query.includes(',')) {
-                const parts = query.split(',').map(p => p.trim()).filter(p => p);
-                const seenIds = new Set();
-                parts.forEach(part => {
-                    fuseCWE.search(part).forEach(res => {
-                        if (!seenIds.has(res.item.id)) {
-                            seenIds.add(res.item.id);
-                            results.push(res);
-                        }
+                // Handle multiple queries separated by commas
+                let results = [];
+                if (query.includes(',')) {
+                    const parts = query.split(',').map(p => p.trim()).filter(p => p);
+                    const seenIds = new Set();
+                    parts.forEach(part => {
+                        fuseCWE.search(part).forEach(res => {
+                            if (!seenIds.has(res.item.id)) {
+                                seenIds.add(res.item.id);
+                                results.push(res);
+                            }
+                        });
                     });
-                });
-            } else {
-                results = fuseCWE.search(query);
-            }
+                } else {
+                    results = fuseCWE.search(query);
+                }
 
-            // Throttle rendering to max 15 items for performance and UX cleaniless
-            const limit = Math.min(results.length, 15);
+                // Throttle rendering to max 15 items for performance and UX cleaniless
+                const limit = Math.min(results.length, 15);
 
-            if (limit === 0) {
-                resultsContainer.textContent = '';
-                const noneDiv = document.createElement('div');
-                noneDiv.className = 'cwe-empty-state';
-                noneDiv.textContent = 'No matching vulnerabilities found.';
-                resultsContainer.appendChild(noneDiv);
-                return;
-            }
+                if (limit === 0) {
+                    resultsContainer.textContent = '';
+                    const noneDiv = document.createElement('div');
+                    noneDiv.className = 'cwe-empty-state';
+                    noneDiv.textContent = 'No matching vulnerabilities found.';
+                    resultsContainer.appendChild(noneDiv);
+                    return;
+                }
 
-            // Render matching items safely without innerHTML
-            resultsContainer.textContent = ''; // clear previous
-            renderCWEResults(results.slice(0, limit));
+                // Render matching items safely without innerHTML
+                resultsContainer.textContent = ''; // clear previous
+                renderCWEResults(results.slice(0, limit));
+            }, 300); // 300ms debounce
         });
     }
 
@@ -841,6 +933,80 @@ document.addEventListener('DOMContentLoaded', () => {
                     showToast(`Copied ${cweId}`);
                     saveRecentCWE(cweId);
                 });
+            });
+        });
+    }
+
+    // --- CVSS Translation Logic ---
+    const btnTo4 = document.getElementById('translate-to-4');
+    const btnTo3 = document.getElementById('translate-to-3');
+    const modal = document.getElementById('translation-modal');
+    const modalAck = document.getElementById('translation-modal-ack');
+
+    let pendingTranslationAction = null;
+
+    if (modalAck) {
+        modalAck.addEventListener('click', () => {
+            modal.classList.add('hidden');
+            hasSeenTranslationWarning = true;
+            saveState();
+            if (pendingTranslationAction) {
+                pendingTranslationAction();
+                pendingTranslationAction = null;
+            }
+        });
+    }
+
+    function handleTranslation(action) {
+        if (!hasSeenTranslationWarning) {
+            pendingTranslationAction = action;
+            modal.classList.remove('hidden');
+        } else {
+            action();
+        }
+    }
+
+    if (btnTo4) {
+        btnTo4.addEventListener('click', () => {
+            handleTranslation(() => {
+                const m3 = state.cvss3.metrics;
+                const newM4 = window.CVSS_Translation.translate3to4(m3);
+                Object.assign(state.cvss4.metrics, newM4);
+
+                updateUISelections();
+                updateCalculations();
+                saveState();
+                document.querySelector('.tab-btn[data-tab="cvss4"]').click();
+                
+                justTranslated = true;
+                if (m3.S === 'C') {
+                    showToast("Approximated to CVSS 4.0 — Subsequent System impacts may need review.", "warning");
+                } else {
+                    showToast("Approximated. Please review manually!", "warning");
+                }
+            });
+        });
+    }
+
+    if (btnTo3) {
+        btnTo3.addEventListener('click', () => {
+            handleTranslation(() => {
+                const m4 = state.cvss4.metrics;
+                const newM3 = window.CVSS_Translation.translate4to3(m4);
+                Object.assign(state.cvss3.metrics, newM3);
+
+                updateUISelections();
+                updateCalculations();
+                saveState();
+                document.querySelector('.tab-btn[data-tab="cvss3"]').click();
+                
+                justTranslated = true;
+                const subsequentImpact = (m4.SC !== 'N' || m4.SI !== 'N' || m4.SA !== 'N' || m4.SI === 'S' || m4.SA === 'S');
+                if (subsequentImpact) {
+                    showToast("Approximated to CVSS 3.1 — Scope and Impacts may need review.", "warning");
+                } else {
+                    showToast("Approximated. Please review manually!", "warning");
+                }
             });
         });
     }

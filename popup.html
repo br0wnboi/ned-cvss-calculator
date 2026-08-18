@@ -48,7 +48,10 @@
             <!-- CVSS 3.1 Tab Content -->
             <section id="cvss3" class="tab-content active">
                 <div class="metrics-group">
-                    <h2>Base Metrics</h2>
+                    <div class="metrics-header">
+                        <h2>Base Metrics</h2>
+                        <button class="translate-btn" id="translate-to-4" title="Approximate to CVSS 4.0">To v4.0</button>
+                    </div>
 
                     <div class="metric">
                         <strong class="metric-label">Attack Vector (AV)</strong>
@@ -126,7 +129,10 @@
             <!-- CVSS 4.0 Tab Content -->
             <section id="cvss4" class="tab-content">
                 <div class="metrics-group">
-                    <h2>Base Metrics</h2>
+                    <div class="metrics-header">
+                        <h2>Base Metrics</h2>
+                        <button class="translate-btn" id="translate-to-3" title="Approximate to CVSS 3.1">To v3.1</button>
+                    </div>
 
                     <div class="metric">
                         <strong class="metric-label">Attack Vector (AV)</strong>
@@ -243,15 +249,12 @@
                             <h2>CWE Search</h2>
                             <div id="cwe-metadata" class="cwe-meta">CWE Database v4.14 | Loading...</div>
                         </div>
-                        <input type="text" id="cwe-search-input" class="cwe-search-input"
-                            placeholder="Search vulnerability (e.g. SQL Injection...)" autocomplete="off">
-                        <div class="cwe-quick-filters">
-                            <span class="cwe-chip">XSS</span>
-                            <span class="cwe-chip">Injection</span>
-                            <span class="cwe-chip">Auth</span>
-                            <span class="cwe-chip">Memory</span>
-                            <span class="cwe-chip">Buffer</span>
+                        <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
+                            <input type="text" id="cwe-search-input" class="cwe-search-input"
+                                placeholder="Search vulnerability..." autocomplete="off" style="flex: 1;">
+                            <button id="semantic-test-btn" style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; border: none; cursor: pointer; padding: 11px 16px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; flex-shrink: 0; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: transform 0.2s, box-shadow 0.2s;">✨ AI Match</button>
                         </div>
+                        <div id="semantic-status" style="font-size: 10px; color: #a1a1aa; margin-top: 4px; display: none;"></div>
                     </div>
                     <div id="cwe-results" class="cwe-results-list">
                         <!-- Results injected here -->
@@ -312,10 +315,22 @@
     <script src="lib/cvsscalc40.js"></script>
     <script src="lib/cvsscalc40_helptext.js"></script>
     <script src="lib/fuse.min.js"></script>
+    <script src="lib/translation.js"></script>
     <script src="popup.js"></script>
 
     <!-- Custom Toast Notification -->
     <div id="toast" class="toast-notification"></div>
+
+    <!-- Translation Disclaimer Modal -->
+    <div id="translation-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>Translation Warning</h3>
+            <p>CVSS version translations are <strong>mathematical approximations</strong>, not exact conversions.</p>
+            <p>Metrics like <em>Scope (S)</em> and <em>Attack Requirements (AT)</em> map differently between versions. The translated score may over- or under-estimate severity.</p>
+            <p><strong>Always review the resulting vector manually.</strong></p>
+            <button id="translation-modal-ack" class="ack-btn">I understand</button>
+        </div>
+    </div>
 </body>
 
 </html>

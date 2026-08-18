@@ -1,0 +1,10 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "generate_embeddings.js",
+  "type": "module",
+  "dependencies": {
+    "@huggingface/transformers": "latest"
+  }
+}
